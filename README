@@ -1,0 +1,23 @@
+
+Examples
+--------
+
+require 'rexle'
+
+s = "<a>ddd<trust colour='red'>abc</trust><ccc>rrr</ccc></a>"
+doc = Rexle.new s
+r = doc.xpath 'trust'
+r.value
+#=> abc
+
+r.attributes
+#=> {"colour"=>"red"}
+
+s = "<a>ddd<trust>abc</trust><ccc>rrr</ccc></a>"
+Rexle.new(s).xpath('trust').value
+#=> abc
+
+s = "<a>ddd<trust>abc</trust><ccc><eee>fff</eee></ccc></a>"
+Rexle.new(s).xpath('ccc/eee').value
+#=> "fff"
+
