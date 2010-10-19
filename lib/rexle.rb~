@@ -47,45 +47,23 @@ class Rexle
 
         items = raw_items.map do |x| 
           name, value = x.split(/=/)
-          if value then
-            "h['%s'] == '%s'" % [name,value[1..-2]]
-          else
-            name
-          end
+          [name, (value ? value[1..-2] : '')]
         end
-
-        attr_search = items.join(' ')
-        puts 'attr_search : ' + attr_search
-
       end
 
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name}
         
       if return_elements.length > 0 then
         if a.empty? then
-          return_elements.map {|x| filter(x, attr_search)}.compact!
+          return_elements.map{|x| @child_elements[x.last]}            
         else
-          return_elements.map {|x| filter(x, attr_search){|e| e.xpath a.join }}.flatten
+          return_elements.map{|x| @child_elements[x.last].xpath a.join}.flatten     
         end
       end
     end
 
     def attributes()
       @attributes
-    end
-
-
-    def filter(raw_element, attr_search, &blk)
-
-      x = raw_element
-      e = @child_elements[x.last]
-
-      if attr_search.empty? then
-        block_given? ? blk.call(e) : e
-      else
-        h = x[0][1]            
-        block_given? ? blk.call(e) : e if h and eval(attr_search)
-      end
     end
 
   end
