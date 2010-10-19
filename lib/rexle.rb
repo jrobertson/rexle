@@ -9,7 +9,7 @@ class Rexle
   end
 
   def xpath(path)
-    @doc.xpath path
+    @doc.xpath(path).flatten.compact
   end
 
   class Element
@@ -55,7 +55,6 @@ class Rexle
         end
 
         attr_search = items.join(' ')
-        puts 'attr_search : ' + attr_search
 
       end
 
@@ -63,9 +62,9 @@ class Rexle
         
       if return_elements.length > 0 then
         if a.empty? then
-          return_elements.map {|x| filter(x, attr_search)}.compact!
+          return_elements.map {|x| puts 'x : ' + x.inspect; filter(x, attr_search)} # .compact!
         else
-          return_elements.map {|x| filter(x, attr_search){|e| e.xpath a.join }}.flatten
+          return_elements.map {|x| puts 'x2 : ' + x.inspect; filter(x, attr_search){|e| e.xpath a.join }}
         end
       end
     end
@@ -80,11 +79,11 @@ class Rexle
       x = raw_element
       e = @child_elements[x.last]
 
-      if attr_search.empty? then
-        block_given? ? blk.call(e) : e
-      else
+      if attr_search then
         h = x[0][1]            
         block_given? ? blk.call(e) : e if h and eval(attr_search)
+      else
+        block_given? ? blk.call(e) : e
       end
     end
 

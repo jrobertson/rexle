@@ -9,7 +9,7 @@ class Rexle
   end
 
   def xpath(path)
-    @doc.xpath path
+    @doc.xpath(path).flatten.compact
   end
 
   class Element
@@ -47,23 +47,49 @@ class Rexle
 
         items = raw_items.map do |x| 
           name, value = x.split(/=/)
-          [name, (value ? value[1..-2] : '')]
+          if value then
+            "h['%s'] == '%s'" % [name,value[1..-2]]
+          else
+            name
+          end
         end
+
+        attr_search = items.join(' ')
+        puts 'attr_search : ' + attr_search
+
       end
 
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name}
         
       if return_elements.length > 0 then
         if a.empty? then
-          return_elements.map{|x| @child_elements[x.last]}            
+          return_elements.map {|x| puts 'x : ' + x.inspect; filter(x, attr_search)} # .compact!
         else
-          return_elements.map{|x| @child_elements[x.last].xpath a.join}.flatten     
+          return_elements.map {|x| puts 'x2 : ' + x.inspect; filter(x, attr_search){|e| e.xpath a.join }}
         end
       end
     end
 
     def attributes()
       @attributes
+    end
+
+
+    def filter(raw_element, attr_search, &blk)
+
+      x = raw_element
+      e = @child_elements[x.last]
+
+      puts "boob" + attr_search.inspect
+      puts 'e : ' + e.inspect
+
+      if attr_search then
+        h = x[0][1]            
+        block_given? ? blk.call(e) : e if h and eval(attr_search)
+      else
+        puts 'hachi'
+        block_given? ? (puts 'chewie'; blk.call(e)) : (puts 'footie'; e)
+      end
     end
 
   end
