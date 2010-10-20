@@ -4,20 +4,49 @@ Examples
 
 require 'rexle'
 
-s = "<a>ddd<trust colour='red'>abc</trust><ccc>rrr</ccc></a>"
+# 1)
+s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
 doc = Rexle.new s
-r = doc.xpath 'trust'
-r.value
+r = doc.xpath "trust[@colour='red']"
+r[0].value
 #=> abc
 
-r.attributes
+# 2) 
+s = "<a>ddd<trust colour='red'>abc</trust><trust colour='blue'>fff</trust><trust colour='purple'>ggg</trust></a>"
+doc = Rexle.new s
+r = doc.xpath "trust[@colour='red']"
+r[0].value
+#=> abc
+
+r[0].attributes
 #=> {"colour"=>"red"}
 
+# 3)
+s = "<a>ddd<trust colour='red'>abc</trust><trust colour='blue'>fff</trust><trust colour='red'>ggg</trust></a>"
+doc = Rexle.new s
+r = doc.xpath "trust[@colour='red']"
+puts r.map(&:value).join(',')
+#=> abc,ggg
+
+# 4)
 s = "<a>ddd<trust>abc</trust><ccc>rrr</ccc></a>"
-Rexle.new(s).xpath('trust').value
+Rexle.new(s).xpath('trust')[0].value
 #=> abc
 
+# 5)
 s = "<a>ddd<trust>abc</trust><ccc><eee>fff</eee></ccc></a>"
-Rexle.new(s).xpath('ccc/eee').value
+Rexle.new(s).xpath('ccc/eee')[0].value
 #=> "fff"
 
+# 6)
+s = "<a>ddd<trust>abc</trust><trust>ee3</trust><ccc>rrr</ccc></a>"
+r = Rexle.new(s).xpath('trust')
+puts r.map(&:value).join(',')
+#=> abc,ee3
+
+# 7)
+s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
+doc = Rexle.new s
+r = doc.xpath "//trust"
+puts r.map(&:value).join(',')
+#=> abc,fff
