@@ -55,7 +55,6 @@ class Rexle
         end
 
         attr_search = items.join(' ')
-        puts 'attr_search : ' + attr_search
 
       end
 
@@ -80,15 +79,11 @@ class Rexle
       x = raw_element
       e = @child_elements[x.last]
 
-      puts "boob" + attr_search.inspect
-      puts 'e : ' + e.inspect
-
       if attr_search then
         h = x[0][1]            
         block_given? ? blk.call(e) : e if h and eval(attr_search)
       else
-        puts 'hachi'
-        block_given? ? (puts 'chewie'; blk.call(e)) : (puts 'footie'; e)
+        block_given? ? blk.call(e) : e
       end
     end
 
