@@ -38,7 +38,12 @@ class Rexle
     def xpath(xpath_value)
 
       a = xpath_value.split('/')
-      s = a.shift
+
+      if xpath_value[0,2] == '//' then
+        s = a[2]
+      else
+        s = a.shift
+      end
 
       element_name, condition = s.split(/\[/)
       
@@ -58,13 +63,20 @@ class Rexle
 
       end
 
+      wildcard = element_name[0,2] == '//'
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name}
         
       if return_elements.length > 0 then
         if a.empty? then
-          return_elements.map {|x| puts 'x : ' + x.inspect; filter(x, attr_search)} # .compact!
+          return_elements.map {|x| filter(x, attr_search)}
         else
-          return_elements.map {|x| puts 'x2 : ' + x.inspect; filter(x, attr_search){|e| e.xpath a.join }}
+          return_elements.map {|x| filter(x, attr_search){|e| r = e.xpath a.join('/'); r || e }}
+        end
+      else
+        # strip off the 1st element from the XPath
+        new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
+        if new_xpath then
+          self.xpath new_xpath
         end
       end
     end
