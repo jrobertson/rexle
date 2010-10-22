@@ -9,7 +9,18 @@ class Rexle
   end
 
   def xpath(path)
-    @doc.xpath(path).flatten.compact
+
+    fn_match = path.match(/^(\w+)\(([^\)]+)\)$/)
+
+    if fn_match.nil? then      
+      procs = {Array: proc {|x| x.flatten.compact}, String: proc {|x| x}}
+      result = @doc.xpath(path)
+      procs[result.class.to_s.to_sym].call(result)
+    else
+      m, xpath_value = r.captures
+      method(m.to_sym).call(xpath_value)
+    end
+
   end
 
   class Element
@@ -41,36 +52,47 @@ class Rexle
 
       if xpath_value[0,2] == '//' then
         s = a[2]
+      elsif xpath_value == 'text()' then
+        return @value
       else
+
+        attribute = xpath_value[/^attribute::(.*)/,1] 
+        return @attributes[attribute] if attribute
+ 
         s = a.shift
       end
 
       element_name, condition = s.split(/\[/)
       
       if condition then
-        raw_items = condition.scan(/[\w]+=\'[^\']+\'|and/)
+        raw_items = condition.scan(/[\w]+=\'[^\']+\'|and|\d+/)
 
-        items = raw_items.map do |x| 
-          name, value = x.split(/=/)
-          if value then
-            "h['%s'] == '%s'" % [name,value[1..-2]]
-          else
-            name
+
+        
+        if raw_items[0][/^\d+$/] then
+          attr_search = raw_items[0].to_i
+        else
+          items = raw_items.map do |x| 
+            name, value = x.split(/=/)
+            if value then
+              "h['%s'] == '%s'" % [name,value[1..-2]]
+            else
+              name
+            end
           end
+          attr_search = items.join(' ')
         end
-
-        attr_search = items.join(' ')
 
       end
 
       wildcard = element_name[0,2] == '//'
-      return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name}
+      return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name or element_name == '*'}
         
       if return_elements.length > 0 then
         if a.empty? then
-          return_elements.map {|x| filter(x, attr_search)}
+          return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
         else
-          return_elements.map {|x| filter(x, attr_search){|e| r = e.xpath a.join('/'); r || e }}
+          return_elements.map.with_index {|x,i| filter(x, i+1, attr_search){|e| r = e.xpath a.join('/'); r || e }}
         end
       else
         # strip off the 1st element from the XPath
@@ -85,15 +107,26 @@ class Rexle
       @attributes
     end
 
+    def text()
+      @value
+    end
 
-    def filter(raw_element, attr_search, &blk)
+    def filter(raw_element, i, attr_search, &blk)
 
       x = raw_element
       e = @child_elements[x.last]
 
       if attr_search then
-        h = x[0][1]            
-        block_given? ? blk.call(e) : e if h and eval(attr_search)
+        h = x[0][1]  # <-- fetch the attributes
+        if block_given? then 
+          blk.call(e)
+        else
+          if attr_search.is_a? Fixnum then
+            e if i == attr_search
+          else
+            e if h and eval(attr_search)
+          end
+        end 
       else
         block_given? ? blk.call(e) : e
       end
@@ -159,6 +192,10 @@ class Rexle
 
       end
     end
+  end
+
+  def count(path)
+    @doc.xpath(path).flatten.compact.length
   end
 
 end

@@ -66,8 +66,6 @@ class Rexle
       
       if condition then
         raw_items = condition.scan(/[\w]+=\'[^\']+\'|and|\d+/)
-
-
         
         if raw_items[0][/^\d+$/] then
           attr_search = raw_items[0].to_i
