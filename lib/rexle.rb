@@ -13,7 +13,10 @@ class Rexle
     fn_match = path.match(/^(\w+)\(([^\)]+)\)$/)
 
     if fn_match.nil? then      
-      procs = {Array: proc {|x| x.flatten.compact}, String: proc {|x| x}}
+      procs = {
+        Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
+        String: proc {|x| x}
+      }
       result = @doc.xpath(path)
       procs[result.class.to_s.to_sym].call(result)
     else

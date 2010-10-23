@@ -4,14 +4,14 @@ Examples
 
 require 'rexle'
 
-# 1)
+# 1) return the element which matches @colour='red'
 s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
 doc = Rexle.new s
 r = doc.xpath "trust[@colour='red']"
 r[0].value
 #=> abc
 
-# 2) 
+# 2) return the element value and attributes 
 s = "<a>ddd<trust colour='red'>abc</trust><trust colour='blue'>fff</trust><trust colour='purple'>ggg</trust></a>"
 doc = Rexle.new s
 r = doc.xpath "trust[@colour='red']"
@@ -21,32 +21,42 @@ r[0].value
 r[0].attributes
 #=> {"colour"=>"red"}
 
-# 3)
+# 3) multiple elements returned which match @colour='red'
 s = "<a>ddd<trust colour='red'>abc</trust><trust colour='blue'>fff</trust><trust colour='red'>ggg</trust></a>"
 doc = Rexle.new s
-r = doc.xpath "trust[@colour='red']"
-puts r.map(&:value).join(',')
+puts doc.xpath("trust[@colour='red']").map(&:value).join(',')
 #=> abc,ggg
 
-# 4)
+# 4) single element returned
 s = "<a>ddd<trust>abc</trust><ccc>rrr</ccc></a>"
 Rexle.new(s).xpath('trust')[0].value
 #=> abc
 
-# 5)
+# 5) nested elements
 s = "<a>ddd<trust>abc</trust><ccc><eee>fff</eee></ccc></a>"
 Rexle.new(s).xpath('ccc/eee')[0].value
 #=> "fff"
 
-# 6)
+# 6) multiple elements returned
 s = "<a>ddd<trust>abc</trust><trust>ee3</trust><ccc>rrr</ccc></a>"
-r = Rexle.new(s).xpath('trust')
-puts r.map(&:value).join(',')
+puts Rexle.new(s).xpath('trust').map(&:value).join(',')
 #=> abc,ee3
 
-# 7)
+# 7) //trust
 s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
-doc = Rexle.new s
-r = doc.xpath "//trust"
-puts r.map(&:value).join(',')
+puts Rexle.new(s).xpath("//trust").map(&:value).join(',')
 #=> abc,fff
+
+# 8) count()
+s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
+puts Rexle.new(s).xpath "count(trust)"
+#=> 2
+
+# 9) attribute::id
+s = "<a id='fuzz'>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
+Rexle.new(s).xpath "attribute::id"
+#=> fuzz
+
+# 10) element selection by index
+s = "<a id='fuzz'>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
+puts Rexle.new(s).xpath("trust[1]").value
