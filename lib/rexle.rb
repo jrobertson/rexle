@@ -21,7 +21,7 @@ class Rexle
       result = @doc.xpath(path, bucket)
 
       procs[result.class.to_s.to_sym].call(result)
-
+      bucket
     else
       m, xpath_value = fn_match.captures
       method(m.to_sym).call(xpath_value)

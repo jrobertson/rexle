@@ -14,14 +14,14 @@ class Rexle
 
     if fn_match.nil? then      
       procs = {
-        Array: proc {|x| x.length == 1 ? x[0] : x}, 
+        Array: proc {|x| x.compact!; x.length == 1 ? x[0] : x}, 
         String: proc {|x| x}
       }
       bucket = []
       result = @doc.xpath(path, bucket)
 
       procs[result.class.to_s.to_sym].call(result)
-      bucket
+
     else
       m, xpath_value = fn_match.captures
       method(m.to_sym).call(xpath_value)
@@ -96,17 +96,15 @@ class Rexle
       end
 
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name or element_name == '*'}
-
         
       if return_elements.length > 0 then
         if a.empty? then
-          return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
+          rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
         else
           return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e } 
 
             rlist << rtn_element
-            rtn_element
           end
         end
       else
