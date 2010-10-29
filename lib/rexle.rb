@@ -14,14 +14,14 @@ class Rexle
 
     if fn_match.nil? then      
       procs = {
-        Array: proc {|x| x.compact!; x.length == 1 ? x[0] : x}, 
+        Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
         String: proc {|x| x}
       }
       bucket = []
       result = @doc.xpath(path, bucket)
 
       procs[result.class.to_s.to_sym].call(result)
-      bucket
+      
     else
       m, xpath_value = fn_match.captures
       method(m.to_sym).call(xpath_value)
@@ -100,11 +100,13 @@ class Rexle
       if return_elements.length > 0 then
         if a.empty? then
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
+          rlist
         else
           return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e } 
 
             rlist << rtn_element
+            rlist
           end
         end
       else
@@ -114,6 +116,8 @@ class Rexle
           self.xpath(new_xpath, rlist)
         end
       end
+
+      rlist
     end
 
     def scan_match(nodes, element, rlist)
@@ -121,6 +125,7 @@ class Rexle
         rlist << x if x.name == element
         x.xpath('//' + element, rlist) unless x.children.empty?
       end
+      rlist
     end
 
     def attributes()
