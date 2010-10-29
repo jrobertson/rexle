@@ -86,13 +86,14 @@ class Rexle
           end
           attr_search = items.join(' ')
         end
+        condition = "[" + condition
 
       end
 
       wildcard = xpath_value[0,2] == '//'
 
       if wildcard then
-        return scan_match(self, element_name, rlist) 
+        return scan_match(self, element_name, attr_search, condition, rlist) 
       end
 
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name or element_name == '*'}
@@ -120,10 +121,18 @@ class Rexle
       rlist
     end
 
-    def scan_match(nodes, element, rlist)
+    def scan_match(nodes, element, attr_search, condition, rlist)
       nodes.children.each.with_index do |x, i|
-        rlist << x if x.name == element
-        x.xpath('//' + element, rlist) unless x.children.empty?
+        if x.name == element
+          h = x.attributes
+          if attr_search then
+            rlist << x if h and eval(attr_search)
+          else
+            rlist << x 
+          end
+        end
+
+        x.xpath('//' + element + condition, rlist) unless x.children.empty?
       end
       rlist
     end
