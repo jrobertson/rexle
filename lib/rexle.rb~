@@ -12,6 +12,8 @@ class Rexle
 
     fn_match = path.match(/^(\w+)\(([^\)]+)\)$/)
 
+    # Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
+
     if fn_match.nil? then      
       procs = {
         Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
@@ -58,10 +60,10 @@ class Rexle
 
       if xpath_value[0,2] == '//' then
         s = a[2]
-      elsif xpath_value == 'text()' then
+      elsif xpath_value == 'text()' then      
+        a.shift
         return @value
       else
-
         attribute = xpath_value[/^attribute::(.*)/,1] 
         return @attributes[attribute] if attribute
  
@@ -86,13 +88,14 @@ class Rexle
           end
           attr_search = items.join(' ')
         end
+        condition = "[" + condition
 
       end
 
       wildcard = xpath_value[0,2] == '//'
 
       if wildcard then
-        return scan_match(self, element_name, rlist) 
+        return scan_match(self, element_name, attr_search, condition, rlist) 
       end
 
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name or element_name == '*'}
@@ -102,16 +105,26 @@ class Rexle
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
           rlist
         else
+
           return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e } 
-
-            rlist << rtn_element
-            rlist
+            if rtn_element.is_a? String then
+              rlist << rtn_element
+            else
+              if rtn_element.is_a? Element then
+                rlist = rlist + rtn_element
+              else
+                if rtn_element.is_a? Array then        
+                  rlist << rtn_element unless rtn_element[0].is_a? String
+                end 
+              end
+            end
           end
         end
       else
         # strip off the 1st element from the XPath
         new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
+
         if new_xpath then
           self.xpath(new_xpath, rlist)
         end
@@ -120,10 +133,18 @@ class Rexle
       rlist
     end
 
-    def scan_match(nodes, element, rlist)
+    def scan_match(nodes, element, attr_search, condition, rlist)
       nodes.children.each.with_index do |x, i|
-        rlist << x if x.name == element
-        x.xpath('//' + element, rlist) unless x.children.empty?
+        if x.name == element
+          h = x.attributes
+          if attr_search then
+            rlist << x if h and eval(attr_search)
+          else
+            rlist << x 
+          end
+        end
+
+        x.xpath('//' + element + condition, rlist) unless x.children.empty?
       end
       rlist
     end

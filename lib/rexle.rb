@@ -58,10 +58,10 @@ class Rexle
 
       if xpath_value[0,2] == '//' then
         s = a[2]
-      elsif xpath_value == 'text()' then
+      elsif xpath_value == 'text()' then      
+        a.shift
         return @value
       else
-
         attribute = xpath_value[/^attribute::(.*)/,1] 
         return @attributes[attribute] if attribute
  
@@ -103,16 +103,26 @@ class Rexle
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
           rlist
         else
+
           return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e } 
-
-            rlist << rtn_element
-            rlist
+            if rtn_element.is_a? String then
+              rlist << rtn_element
+            else
+              if rtn_element.is_a? Element then
+                rlist = rlist + rtn_element
+              else
+                if rtn_element.is_a? Array then        
+                  rlist << rtn_element unless rtn_element[0].is_a? String
+                end 
+              end
+            end
           end
         end
       else
         # strip off the 1st element from the XPath
         new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
+
         if new_xpath then
           self.xpath(new_xpath, rlist)
         end
