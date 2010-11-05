@@ -8,17 +8,17 @@ require 'rexle'
 s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
 doc = Rexle.new s
 r = doc.xpath "trust[@colour='red']"
-r[0].value
+r.value
 #=> abc
 
 # 2) return the element value and attributes 
 s = "<a>ddd<trust colour='red'>abc</trust><trust colour='blue'>fff</trust><trust colour='purple'>ggg</trust></a>"
 doc = Rexle.new s
 r = doc.xpath "trust[@colour='red']"
-r[0].value
+r.value
 #=> abc
 
-r[0].attributes
+r.attributes
 #=> {"colour"=>"red"}
 
 # 3) multiple elements returned which match @colour='red'
@@ -29,12 +29,12 @@ puts doc.xpath("trust[@colour='red']").map(&:value).join(',')
 
 # 4) single element returned
 s = "<a>ddd<trust>abc</trust><ccc>rrr</ccc></a>"
-Rexle.new(s).xpath('trust')[0].value
+Rexle.new(s).xpath('trust').value
 #=> abc
 
 # 5) nested elements
 s = "<a>ddd<trust>abc</trust><ccc><eee>fff</eee></ccc></a>"
-Rexle.new(s).xpath('ccc/eee')[0].value
+Rexle.new(s).xpath('ccc/eee').value
 #=> "fff"
 
 # 6) multiple elements returned
@@ -60,3 +60,78 @@ Rexle.new(s).xpath "attribute::id"
 # 10) element selection by index
 s = "<a id='fuzz'>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
 puts Rexle.new(s).xpath("trust[1]").value
+#=> abc
+
+# 11) select 1 descendent which matches //trust[@colour='red']
+s = "<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>"
+doc = Rexle.new(s)
+doc.xpath("//trust[@colour='red']").value
+#=> abc
+
+# 12) select 2 mixed descendents which match //trust[@colour='red']
+s = "<a>ddd<trust colour='red'>abc</trust><trust>fff<e><trust colour='red'>rrr</trust></e></trust></a>"
+doc = Rexle.new(s)
+doc.xpath("//trust[@colour='red']").map(&:value).join(',')
+#=> abc,rrr
+
+# 13) select the text value from an XPath 2 elements deep
+s = "<a id='fuzz'>ddd<summary><a>fff<a/></summary></a>"
+doc = Rexle.new s
+r = doc.xpath "summary/a/text()"
+#=> fff
+
+# 14) mixed xpath: descendant and index
+s = "<a>ddd<trust>abc</trust><ccc><eee>fff</eee><eee>ggg</eee></ccc></a>"
+doc = Rexle.new s
+r = doc.xpath "ccc/eee[2]"
+#=> ggg
+
+# 15) multiple descendant elements returned from text()
+s = "<root>ddd<a><trust>abc</trust><trust>ee3</trust><ccc>rrr</ccc></a></root>"
+doc = Rexle.new(s)
+r = doc.xpath("a/trust/text()")
+#=> abc,ee3
+
+# 16) a wildcard followed by a single element attribute
+s = "<root>ddd<a><trust id='45'>abc</trust></a></root>"
+doc = Rexle.new(s)
+r = doc.xpath('a/*/attribute::id')
+#=> 45
+
+# 17) a wildcard followed by a pair of element attributes
+s = "<root>ddd<a><trust id='45'>abc</trust><ccc id='66'>rrr</ccc></a></root>"
+doc = Rexle.new(s)
+r = doc.xpath('a/*/attribute::id')
+#=> 45, 66
+
+# 18) a wildcard followed by a single element attribute from a possible pair
+require '/home/james/learning/ruby/rexle'
+s = "<root>ddd<a><trust id='45'>abc</trust><ccc>rrr</ccc></a></root>"
+doc = Rexle.new(s)
+r = doc.xpath('a/*/attribute::id')
+#=> 45
+
+# 19) descendant with predicate
+s = "<root>ddd<a><trust id='45'>abc</trust><ccc>rrr</ccc></a></root>"
+puts Rexle.new(s).xpath("a/trust[@id='45']").value
+#=> abc
+
+# 20) descendant with wildcard and predicate
+s = "<root>ddd<a><trust id='45'>abc</trust><ccc>rrr</ccc></a></root>"
+puts Rexle.new(s).xpath("a/*[@id='45']").value
+#=> abc
+
+# 21) descendant with wildcard
+s = "<root>ddd<a><trust id='45'>abc</trust><ccc>rrr</ccc></a></root>"
+Rexle.new(s).xpath("a/*")
+#=> abc,rrr
+
+# 22) descendant with wildcard and no 2nd element value
+s = "<root>ddd<a><trust id='45'>abc</trust><ccc></ccc></a></root>"
+r = Rexle.new(s).xpath("a/*")
+#=> 45,
+
+# 23) descendant 3 levels deep
+s = "<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>"
+r = Rexle.new(s).xpath("a/trust/b")
+#=> 4444

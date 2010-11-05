@@ -10,9 +10,8 @@ class Rexle
 
   def xpath(path)
 
+    # is it a function
     fn_match = path.match(/^(\w+)\(([^\)]+)\)$/)
-
-    # Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
 
     if fn_match.nil? then      
       procs = {
@@ -41,19 +40,6 @@ class Rexle
       @child_lookup = []
     end
 
-    def children()
-      @child_elements
-    end
-    
-    def children=(a)
-      @child_elements = a
-    end
-
-    def add_element(item)
-      @child_lookup << [item.name, item.attributes, item.value]
-      @child_elements << item
-    end    
-
     def xpath(xpath_value, rlist=[])
 
       a = xpath_value.split('/')
@@ -65,63 +51,37 @@ class Rexle
         return @value
       else
         attribute = xpath_value[/^attribute::(.*)/,1] 
-        return @attributes[attribute] if attribute
+        return @attributes[attribute] if attribute and @attributes and @attributes.has_key?(attribute)
  
         s = a.shift
       end
 
-      element_name, condition = s.split(/\[/)
+      element_name, condition = s.match(/(^[^\[]+)(\[[^\]]+\])?/).captures
       
-      if condition then
-        raw_items = condition.scan(/[\w]+=\'[^\']+\'|and|\d+/)
-        
-        if raw_items[0][/^\d+$/] then
-          attr_search = raw_items[0].to_i
-        else
-          items = raw_items.map do |x| 
-            name, value = x.split(/=/)
-            if value then
-              "h['%s'] == '%s'" % [name,value[1..-2]]
-            else
-              name
-            end
-          end
-          attr_search = items.join(' ')
-        end
-        condition = "[" + condition
+      attr_search = format_attributes(condition) if condition
 
-      end
-
-      wildcard = xpath_value[0,2] == '//'
-
-      if wildcard then
-        return scan_match(self, element_name, attr_search, condition, rlist) 
-      end
+      return scan_match(self, element_name, attr_search, condition, rlist) if xpath_value[0,2] == '//'
 
       return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name or element_name == '*'}
         
       if return_elements.length > 0 then
+
         if a.empty? then
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
-          rlist
         else
 
           return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e } 
-            if rtn_element.is_a? String then
+            if rtn_element.is_a? Array then
+              rlist = rtn_element.flatten
+            elsif (rtn_element.is_a? String) || not(rtn_element[0].is_a? String)
               rlist << rtn_element
-            else
-              if rtn_element.is_a? Element then
-                rlist = rlist + rtn_element
-              else
-                if rtn_element.is_a? Array then        
-                  rlist << rtn_element unless rtn_element[0].is_a? String
-                end 
-              end
             end
           end
+
         end
       else
+
         # strip off the 1st element from the XPath
         new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
 
@@ -132,6 +92,40 @@ class Rexle
 
       rlist
     end
+
+    def add_element(item)
+      @child_lookup << [item.name, item.attributes, item.value]
+      @child_elements << item
+    end    
+
+    def attributes() @attributes end
+
+    def children() @child_elements end
+    
+    def children=(a) @child_elements = a end
+
+    def text() @value end
+
+    private
+
+    def format_attributes(condition)
+      raw_items = condition[1..-1].scan(/[\w]+=\'[^\']+\'|and|\d+/)
+      
+      if raw_items[0][/^\d+$/] then
+        return raw_items[0].to_i
+      else
+        items = raw_items.map do |x| 
+          name, value = x.split(/=/)
+          if value then
+            "h['%s'] == '%s'" % [name,value[1..-2]]
+          else
+            name
+          end
+        end
+        return items.join(' ')
+      end
+    end
+
 
     def scan_match(nodes, element, attr_search, condition, rlist)
       nodes.children.each.with_index do |x, i|
@@ -147,14 +141,6 @@ class Rexle
         x.xpath('//' + element + condition, rlist) unless x.children.empty?
       end
       rlist
-    end
-
-    def attributes()
-      @attributes
-    end
-
-    def text()
-      @value
     end
 
     def filter(raw_element, i, attr_search, &blk)
@@ -179,6 +165,8 @@ class Rexle
     end
 
   end # -- end of element --
+
+  private
 
   def scan_element(a)
 
@@ -240,8 +228,6 @@ class Rexle
     end
   end
 
-  def count(path)
-    @doc.xpath(path).flatten.compact.length
-  end
+  def count(path) @doc.xpath(path).flatten.compact.length end
 
 end
