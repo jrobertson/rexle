@@ -164,9 +164,13 @@ class Rexle
       e = @child_elements[x.last]
       h = x[0][1]  # <-- fetch the attributes
 
-      if not attr_search or \
-        (attr_search and ((attr_search.is_a?(Fixnum) and \
-          i == attr_search) or (h and eval(attr_search)))) then
+      if attr_search then
+        if attr_search.is_a? Fixnum then
+          block_given? ? blk.call(e) : e if i == attr_search 
+        elsif h and eval(attr_search)
+          block_given? ? blk.call(e) : e
+        end
+      else
         block_given? ? blk.call(e) : e
       end
 
@@ -255,4 +259,3 @@ class Rexle
   def count(path) @doc.xpath(path).flatten.compact.length end
 
 end
-

@@ -3,8 +3,8 @@
 # file: test_rexle.rb
  
 require 'testdata'
-#require 'rexle'
-require '/home/james/learning/ruby/rexle'
+require 'rexle'
+#require '/home/james/learning/ruby/rexle'
 
 testdata = Testdata.new('testdata.xml')
 
@@ -68,6 +68,19 @@ testdata.paths do |path|
       expected = output.data('value')
       result == expected
     end
+  end
+
+  testdata.find_by('name only').each do |title|
+
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath') do |xml, xpath| 
+        Rexle.new(xml).xpath(xpath).name 
+      end
+
+      expected = output.data('name')
+      result == expected
+    end
+
   end
 
 end

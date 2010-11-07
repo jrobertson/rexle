@@ -704,5 +704,31 @@
         </io>
       </records>
     </test>
+    <test>
+      <summary>
+        <path>28</path>
+        <type>name only</type>
+        <description>descendant with wildcard and index predicate</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>
+              ]]>
+            </xml>
+            <xpath>a/*[2]</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <name>ccc</name>
+          </summary>
+        </io>
+      </records>
+    </test>
   </records>
 </tests>
