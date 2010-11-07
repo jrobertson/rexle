@@ -78,8 +78,8 @@ class Rexle
               rlist << rtn_element
             end
           end
-
         end
+	
       else
 
         # strip off the 1st element from the XPath

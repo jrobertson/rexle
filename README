@@ -123,15 +123,26 @@ puts Rexle.new(s).xpath("a/*[@id='45']").value
 
 # 21) descendant with wildcard
 s = "<root>ddd<a><trust id='45'>abc</trust><ccc>rrr</ccc></a></root>"
-Rexle.new(s).xpath("a/*")
+Rexle.new(s).xpath("a/*").map(&:value).join(',')
 #=> abc,rrr
 
 # 22) descendant with wildcard and no 2nd element value
 s = "<root>ddd<a><trust id='45'>abc</trust><ccc></ccc></a></root>"
-r = Rexle.new(s).xpath("a/*")
+r = Rexle.new(s).xpath("a/*").map(&:value).join(',')
 #=> 45,
 
 # 23) descendant 3 levels deep
 s = "<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>"
-r = Rexle.new(s).xpath("a/trust/b")
+r = Rexle.new(s).xpath("a/trust/b").value
+#=> 4444
+
+# 24) descendant 3 levels deep with wildcard and predicate
+s = "<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>"
+Rexle.new(s).xpath("a/*[colour='red']/b").value
+#=> 4444
+
+# 25)
+s = "<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>"
+doc = Rexle.new(s)
+doc.xpath("a/*[colour='red']/*")
 #=> 4444
