@@ -678,5 +678,31 @@
         </io>
       </records>
     </test>
+    <test>
+      <summary>
+        <path>27</path>
+        <type>function or string</type>
+        <description>mixed descdentant wildcards with text()</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>
+              ]]>
+            </xml>
+            <xpath>a/*[colour='red']/*/text()</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>4444</value>
+          </summary>
+        </io>
+      </records>
+    </test>
   </records>
 </tests>
