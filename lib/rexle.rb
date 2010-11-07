@@ -62,29 +62,29 @@ class Rexle
 
       return scan_match(self, element_name, attr_search, condition, rlist) if xpath_value[0,2] == '//'
 
-      return_elements = @child_lookup.map.with_index.select {|x|
-
+      return_elements = @child_lookup.map.with_index.select do |x|
         x[0][0] == element_name or element_name == '*'
-      }
+      end
         
       if return_elements.length > 0 then
 
         if a.empty? then
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search)}
         else
-
-          return_elements.map.with_index do |x,i| 
-            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e }
+          
+          rlist << return_elements.map.with_index do |x,i| 
+            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/')); r || e }
             next unless rtn_element 
 
             if rtn_element.is_a? Array then
-              rlist = rtn_element.flatten
+              rtn_element.flatten
             elsif (rtn_element.is_a? String) || not(rtn_element[0].is_a? String)
-              rlist << rtn_element
+              rtn_element
             end
           end
 
         end
+
       else
 
         # strip off the 1st element from the XPath
@@ -175,7 +175,6 @@ class Rexle
   end # -- end of element --
 
   def root() @doc end
-    
   def xml()
     body = scan_print(self.root.children).join
     "<%s>%s</%s>" % [self.root.name, body, self.root.name]
@@ -204,7 +203,7 @@ class Rexle
         value = raw_values
 
         if raw_values.length > 0 then
-          match_found = raw_values.match(/(.*)>([^>]+$)/)
+          match_found = raw_values.match(/(.*)>([^>]*$)/)
           if match_found then
             raw_attributes, value = match_found.captures
             attributes = raw_attributes.split(/\s/).inject({}) do |r, x| 
@@ -226,6 +225,9 @@ class Rexle
             r = scan_element(a)
             element.add_element(r) if r
 
+            # capture siblings
+            #a.slice!(0, name.length + 3) if a[0, name.length + 3].join == "</%s>" % name
+
             (r = scan_element(a); element.add_element r if r) until (a[0, name.length + 3].join == "</%s>" % [name]) or a.length < 2
           else
             #check for its end tag
@@ -241,15 +243,16 @@ class Rexle
   end
 
   def scan_print(nodes)
-    out = []
-    nodes.each do |x|
-      out << "<%s>" % x.name
+
+    nodes.map do |x|
+      out = ["<%s>" % x.name]
       out << scan_print(x.children)
       out << "</%s>" % x.name    
     end
-    out
+
   end
 
   def count(path) @doc.xpath(path).flatten.compact.length end
 
 end
+

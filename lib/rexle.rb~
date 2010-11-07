@@ -62,7 +62,10 @@ class Rexle
 
       return scan_match(self, element_name, attr_search, condition, rlist) if xpath_value[0,2] == '//'
 
-      return_elements = @child_lookup.map.with_index.select {|x| x[0][0] == element_name or element_name == '*'}
+      return_elements = @child_lookup.map.with_index.select {|x|
+
+        x[0][0] == element_name or element_name == '*'
+      }
         
       if return_elements.length > 0 then
 
@@ -71,15 +74,17 @@ class Rexle
         else
 
           return_elements.map.with_index do |x,i| 
-            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e } 
+            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a.join('/'), rlist); r || e }
+            next unless rtn_element 
+
             if rtn_element.is_a? Array then
               rlist = rtn_element.flatten
             elsif (rtn_element.is_a? String) || not(rtn_element[0].is_a? String)
               rlist << rtn_element
             end
           end
+
         end
-	
       else
 
         # strip off the 1st element from the XPath
@@ -107,6 +112,16 @@ class Rexle
     def text() @value end
 
     private
+
+    def scan_print(nodes)
+      out = []
+      nodes.each do |x|
+        out << "<%s>" % x.name
+        out << scan_print(x.children)
+        out << "</%s>" % x.name    
+      end
+      out
+    end
 
     def format_attributes(condition)
       raw_items = condition[1..-1].scan(/[\w]+=\'[^\']+\'|and|\d+/)
@@ -147,24 +162,24 @@ class Rexle
 
       x = raw_element
       e = @child_elements[x.last]
+      h = x[0][1]  # <-- fetch the attributes
 
-      if attr_search then
-        h = x[0][1]  # <-- fetch the attributes
-        if block_given? then 
-          blk.call(e)
-        else
-          if attr_search.is_a? Fixnum then
-            e if i == attr_search
-          else
-            e if h and eval(attr_search)
-          end
-        end 
-      else
+      if not attr_search or \
+        (attr_search and ((attr_search.is_a?(Fixnum) and \
+          i == attr_search) or (h and eval(attr_search)))) then
         block_given? ? blk.call(e) : e
       end
+
     end
 
   end # -- end of element --
+
+  def root() @doc end
+    
+  def xml()
+    body = scan_print(self.root.children).join
+    "<%s>%s</%s>" % [self.root.name, body, self.root.name]
+  end
 
   private
 
@@ -211,9 +226,6 @@ class Rexle
             r = scan_element(a)
             element.add_element(r) if r
 
-            # capture siblings
-            a.slice!(0, name.length + 3) if a[0, name.length + 3].join == "</%s>" % name
-
             (r = scan_element(a); element.add_element r if r) until (a[0, name.length + 3].join == "</%s>" % [name]) or a.length < 2
           else
             #check for its end tag
@@ -226,6 +238,16 @@ class Rexle
 
       end
     end
+  end
+
+  def scan_print(nodes)
+    out = []
+    nodes.each do |x|
+      out << "<%s>" % x.name
+      out << scan_print(x.children)
+      out << "</%s>" % x.name    
+    end
+    out
   end
 
   def count(path) @doc.xpath(path).flatten.compact.length end
