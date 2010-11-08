@@ -14,7 +14,7 @@ testdata.paths do |path|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        Rexle.new(xml).xpath(xpath).value 
+        Rexle.new(xml).xpath(xpath).first.value 
       end
 
       expected = output.data('value')
@@ -26,7 +26,7 @@ testdata.paths do |path|
   testdata.find_by('value and attribute').each do |title|
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        element = Rexle.new(xml).xpath(xpath)
+        element = Rexle.new(xml).xpath(xpath).first
         [element.value, element.attributes.inspect]
       end
 
@@ -46,7 +46,22 @@ testdata.paths do |path|
     end
   end
 
-  testdata.find_by('function or string').each do |title|
+  testdata.find_by('string ony').each do |title|
+
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath') do |xml, xpath| 
+        r = Rexle.new(xml).xpath(xpath).first
+        puts r.inspect
+        r
+      end
+
+      expected = output.data('value')
+      result == expected
+    end
+
+  end
+
+  testdata.find_by('function only').each do |title|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
@@ -74,13 +89,39 @@ testdata.paths do |path|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        Rexle.new(xml).xpath(xpath).name 
+        Rexle.new(xml).xpath(xpath).first.name 
       end
 
       expected = output.data('name')
       result == expected
     end
 
+  end
+
+  testdata.find_by('multiple names').each do |title|
+
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath') do |xml, xpath| 
+        Rexle.new(xml).xpath(xpath).map(&:name).join(',')
+      end
+
+      expected = output.data('names')
+      result == expected
+    end
+
+  end
+
+  testdata.find_by('nested xpath').each do |title|
+
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath', 'inner_xpath') do |xml, xpath1, xpath2| 
+        Rexle.new(xml).xpath(xpath1).map {|x| x.xpath(xpath2).map(&:value)}\
+          .select{|x| x.length > 0}.join(',')
+      end
+
+      expected = output.data('names')
+      result == expected
+    end
   end
 
 end

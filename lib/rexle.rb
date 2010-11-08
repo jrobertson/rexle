@@ -15,7 +15,7 @@ class Rexle
 
     if fn_match.nil? then      
       procs = {
-        Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
+        Array: proc {|x| x.flatten.compact}, 
         String: proc {|x| x}
       }
       bucket = []

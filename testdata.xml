@@ -187,7 +187,7 @@
     <test>
       <summary>    
         <path>8</path>
-        <type>function or string</type>
+        <type>function only</type>
         <description>count()</description>
       </summary>
       <records>
@@ -317,7 +317,7 @@
     <test>
       <summary>
         <path>13</path>
-        <type>function or string</type>
+        <type>string only</type>
         <description>select the text value from an XPath 2 elements deep</description>
       </summary>
       <records>
@@ -395,7 +395,7 @@
     <test>
       <summary>
         <path>16</path>
-        <type>function or string</type>
+        <type>string only</type>
         <description>a wildcard followed by a single element attribute</description>
       </summary>
       <records>
@@ -447,7 +447,7 @@
     <test>
       <summary>
         <path>18</path>
-        <type>function or string</type>
+        <type>string only</type>
         <description>a wildcard followed by a single element attribute</description>
       </summary>
       <records>
@@ -681,7 +681,7 @@
     <test>
       <summary>
         <path>27</path>
-        <type>function or string</type>
+        <type>string only</type>
         <description>mixed descdentant wildcards with text()</description>
       </summary>
       <records>
@@ -726,6 +726,85 @@
           <summary>
             <type>output</type>
             <name>ccc</name>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>29</path>
+        <type>name only</type>
+        <description>single wildcard</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45'>abc</trust></a></root>
+              ]]>
+            </xml>
+            <xpath>*</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <name>a</name>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>30</path>
+        <type>multiple names</type>
+        <description>wildcard with 2 elements returned</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45'>abc</trust></a><f>yyy</f></root>
+              ]]>
+            </xml>
+            <xpath>*</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <names>a,f</names>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>31</path>
+        <type>nested xpath</type>
+        <description>nested XPath enumeration</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45'>abc</trust></a><f><b>yyy</b></f><g><b>t4t4</b></g></root>
+              ]]>
+            </xml>
+            <xpath>*</xpath>
+            <inner_xpath>b</inner_xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <names>yyy,t4t4</names>
           </summary>
         </io>
       </records>
