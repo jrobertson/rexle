@@ -124,6 +124,16 @@ testdata.paths do |path|
     end
   end
 
+  testdata.find_by('XML validation').each do |title|
+
+    path.tested? title do |input, output|
+      result = input.data('xml') {|xml| Rexle.new(xml).xml}
+
+      expected = output.data('xml')
+      result == expected
+    end
+  end
+
 end
 
 puts testdata.passed?

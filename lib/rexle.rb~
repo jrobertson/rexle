@@ -15,7 +15,7 @@ class Rexle
 
     if fn_match.nil? then      
       procs = {
-        Array: proc {|x| r = x.flatten.compact; r.length == 1 ? r[0] : r}, 
+        Array: proc {|x| x.flatten.compact}, 
         String: proc {|x| x}
       }
       bucket = []
@@ -210,7 +210,8 @@ class Rexle
           match_found = raw_values.match(/(.*)>([^>]*$)/)
           if match_found then
             raw_attributes, value = match_found.captures
-            attributes = raw_attributes.split(/\s/).inject({}) do |r, x| 
+            attributes = raw_attributes.scan(/(\w+\='[^']+')|(\w+\="[^"]+")/)\
+              .map(&:compact).inject({}) do |r, x| 
               attr_name, val = x.split(/=/) 
               r.merge(attr_name => val[1..-2])
             end
