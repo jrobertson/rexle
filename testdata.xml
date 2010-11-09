@@ -831,7 +831,39 @@
             <type>output</type>
             <xml>
               <![CDATA[
-<urls><summary><recordx_type></recordx_type><format_mask></format_mask><schema></schema></summary><records><url created='2010-10-11 21:11:16 +0100' id='2' last_modified='2010-10-13 15:20:58 +0100'><short_url></short_url><full_url></full_url></url></records></urls>
+<urls><summary><recordx_type>dynarex</recordx_type><format_mask>[!short_url] [!full_url]</format_mask><schema>urls/url(short_url,full_url)</schema></summary><records><url created='2010-10-11 21:11:16 +0100' id='2' last_modified='2010-10-13 15:20:58 +0100'><short_url>aa</short_url><full_url>http://www.wired.com/</full_url></url></records></urls>
+              ]]>
+            </xml>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>33</path>
+        <type>XML validation</type>
+        <description>validate XML containing newline characters</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<urls>
+  <summary><recordx_type>dynarex</recordx_type><format_mask>[!short_url] [!full_url]</format_mask>
+    <schema>urls/url(short_url,full_url)</schema>
+  </summary><records><url created="2010-10-11 21:11:16 +0100" id="2" last_modified="2010-10-13 15:20:58 +0100">      <short_url>aa</short_url><full_url>http://www.wired.com/</full_url></url></records></urls>
+              ]]>
+            </xml>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <xml>
+              <![CDATA[
+<urls><summary><recordx_type>dynarex</recordx_type><format_mask>[!short_url] [!full_url]</format_mask><schema>urls/url(short_url,full_url)</schema></summary><records><url created='2010-10-11 21:11:16 +0100' id='2' last_modified='2010-10-13 15:20:58 +0100'>      <short_url>aa</short_url><full_url>http://www.wired.com/</full_url></url></records></urls>
               ]]>
             </xml>
           </summary>
