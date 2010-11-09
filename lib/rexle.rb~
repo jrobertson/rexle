@@ -211,7 +211,8 @@ class Rexle
           if match_found then
             raw_attributes, value = match_found.captures
             attributes = raw_attributes.scan(/(\w+\='[^']+')|(\w+\="[^"]+")/)\
-              .map(&:compact).inject({}) do |r, x| 
+              .map(&:compact).flatten.inject({}) do |r, x| 
+
               attr_name, val = x.split(/=/) 
               r.merge(attr_name => val[1..-2])
             end
@@ -250,7 +251,10 @@ class Rexle
   def scan_print(nodes)
 
     nodes.map do |x|
-      out = ["<%s>" % x.name]
+      a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+      tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+
+      out = ["<%s>" % tag]
       out << scan_print(x.children)
       out << "</%s>" % x.name    
     end
