@@ -127,22 +127,27 @@ class Rexle
     end
 
     def format_attributes(condition)
-      raw_items = condition[1..-1].scan(/[\w]+=\'[^\']+\'|and|\d+/)
+      raw_items = condition[1..-1].scan(/\'[^\']+\'|and|\d+|[!=]+|[\w]+/)
       
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       else
-        items = raw_items.map do |x| 
-          name, value = x.split(/=/)
-          if value then
-            "h['%s'] == '%s'" % [name,value[1..-2]]
+        and_items = raw_items.map.with_index.select{|x,i| x == 'and'}.map{|x| [x.last, x.last + 1]}.flatten
+        indices = [0] + and_items + [raw_items.length]
+        cons_items = indices.each_cons(2).map{|x,y| raw_items.slice(x...y)}
+        items = cons_items.map do |x| 
+          if x.length >= 3 then
+            x[1] = '==' if x[1] == '='
+            "h['%s'] %s %s" % x
           else
-            name
+            x
           end
         end
+
         return items.join(' ')
       end
     end
+
 
 
     def scan_match(nodes, element, attr_search, condition, rlist)

@@ -2,10 +2,13 @@
 
 # file: rexle.rb
 
+require 'rexleparser'
+
 class Rexle
 
   def initialize(s)
-    @doc = scan_element(s.split(//))    
+    a = RexleParser.new(s).to_a
+    @doc = scan_element(*a)
   end
 
   def xpath(path)
@@ -186,66 +189,10 @@ class Rexle
 
   private
 
-  def scan_element(a)
-
-    a.shift until a[0] == '<' and a[1] != '/' or a.length < 1
-
-    if a.length > 1 then
-      a.shift
-
-      name = ''
-      name << a.shift
-      name << a.shift while a[0] != ' ' and a[0] != '>'
-
-      if name then
-
-        a.shift until a[0] = '>'
-        raw_values = ''
-        a.shift
-        raw_values << a.shift until a[0] == '<'
-
-        value = raw_values
-
-        if raw_values.length > 0 then
-          match_found = raw_values.match(/(.*)>([^>]*$)/)
-          if match_found then
-            raw_attributes, value = match_found.captures
-            attributes = raw_attributes.scan(/(\w+\='[^']+')|(\w+\="[^"]+")/)\
-              .map(&:compact).flatten.inject({}) do |r, x| 
-
-              attr_name, val = x.split(/=/) 
-              r.merge(attr_name => val[1..-2])
-            end
-          end
-        end
-
-        element = Element.new(name, value, attributes)
-
-        tag = a[0, name.length + 3].join
-
-        if a.length > 0 then
-          children = true
-          children = false if tag == "</%s>" % name
-
-          if children == true then
-            r = scan_element(a)
-            element.add_element(r) if r
-
-            # capture siblings
-            #a.slice!(0, name.length + 3) if a[0, name.length + 3].join == "</%s>" % name
-
-            (r = scan_element(a); element.add_element r if r) until (a[0, name.length + 3].join == "</%s>" % [name]) or a.length < 2
-          else
-            #check for its end tag
-            a.slice!(0, name.length + 3) if a[0, name.length + 3].join == "</%s>" % name
-          end
-
-        end
-
-        element
-
-      end
-    end
+  def scan_element(name, value, attributes, *children)
+    element = Element.new(name, value, attributes)  
+    children.each{|x| element.add_element scan_element(*x)} if children
+    return element
   end
 
   def scan_print(nodes)
@@ -255,6 +202,7 @@ class Rexle
       tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
       out = ["<%s>" % tag]
+      out << x.value unless x.value.empty?
       out << scan_print(x.children)
       out << "</%s>" % x.name    
     end
