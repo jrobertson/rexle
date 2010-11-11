@@ -75,7 +75,7 @@
         <io>
           <summary>
             <type>output</type>
-            <value>abc,ggg</value>
+            <values>abc,ggg</values>
           </summary>
         </io>
       </records>
@@ -153,7 +153,7 @@
         <io>
           <summary>
             <type>output</type>
-            <value>abc,ee3</value>
+            <values>abc,ee3</values>
           </summary>
         </io>
       </records>
@@ -179,7 +179,7 @@
         <io>
           <summary>
             <type>output</type>
-            <value>abc,fff</value>
+            <values>abc,fff</values>
           </summary>
         </io>
       </records>
@@ -309,7 +309,7 @@
         <io>
           <summary>
             <type>output</type>
-            <value>abc,rrr</value>
+            <values>abc,rrr</values>
           </summary>
         </io>
       </records>
@@ -543,7 +543,7 @@
         <io>
           <summary>
             <type>output</type>
-            <value>abc,rrr</value>
+            <values>abc,rrr</values>
           </summary>
         </io>
       </records>
@@ -569,7 +569,7 @@
         <io>
           <summary>
             <type>output</type>
-            <value>abc,</value>
+            <values>abc,</values>
           </summary>
         </io>
       </records>
@@ -615,7 +615,7 @@
 <root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>
               ]]>
             </xml>
-            <xpath>a/*[colour='red']/b</xpath>
+            <xpath>a/*[@colour='red']/b</xpath>
           </summary>
         </io>
         <io>
@@ -641,7 +641,7 @@
 <root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>
               ]]>
             </xml>
-            <xpath>a/*[colour='red']/*</xpath>
+            <xpath>a/*[@colour='red']/*</xpath>
           </summary>
         </io>
         <io>
@@ -667,13 +667,13 @@
 <root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc colour='red'><d>tttt</d></ccc></a></root>
               ]]>
             </xml>
-            <xpath>a/*[colour='red']/*</xpath>
+            <xpath>a/*[@colour='red']/*</xpath>
           </summary>
         </io>
         <io>
           <summary>
             <type>output</type>
-            <value>4444,tttt</value>
+            <values>4444,tttt</values>
           </summary>
         </io>
       </records>
@@ -693,7 +693,7 @@
 <root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc><d>tttt</d></ccc></a></root>
               ]]>
             </xml>
-            <xpath>a/*[colour='red']/*/text()</xpath>
+            <xpath>a/*[@colour='red']/*/text()</xpath>
           </summary>
         </io>
         <io>
@@ -866,6 +866,58 @@
 <urls><summary><recordx_type>dynarex</recordx_type><format_mask>[!short_url] [!full_url]</format_mask><schema>urls/url(short_url,full_url)</schema></summary><records><url created='2010-10-11 21:11:16 +0100' id='2' last_modified='2010-10-13 15:20:58 +0100'>      <short_url>aa</short_url><full_url>http://www.wired.com/</full_url></url></records></urls>
               ]]>
             </xml>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>34</path>
+        <type>multiple values</type>
+        <description>support for !=</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><s><f colour='blue'/><f colour='red'>rrr</f><f colour='red'>ttt</f></s><a></a></root>
+              ]]>
+            </xml>
+            <xpath>//f[@colour!='blue']</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <values>rrr,ttt</values>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>35</path>
+        <type>name only</type>
+        <description>element predicate</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><s><f colour='blue'/><f colour='red'>rrr</f><f colour='red'>ttt</f></s><a></a></root>
+              ]]>
+            </xml>
+            <xpath>s[f='rrr']</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <name>s</name>
           </summary>
         </io>
       </records>

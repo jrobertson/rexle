@@ -3,8 +3,8 @@
 # file: test_rexle.rb
  
 require 'testdata'
-require 'rexle'
-#require '/home/james/learning/ruby/rexle'
+#require 'rexle'
+require '/home/james/learning/ruby/rexle'
 
 testdata = Testdata.new('testdata.xml')
 
@@ -41,7 +41,7 @@ testdata.paths do |path|
         Rexle.new(xml).xpath(xpath).map(&:value).join(',')
       end
 
-      expected = output.data('value')
+      expected = output.data('values')
       result == expected
     end
   end
