@@ -162,7 +162,7 @@
       <summary>
         <path>7</path>
         <type>multiple values</type>
-        <description>multiple elements returned</description>
+        <description>trust</description>
       </summary>
       <records>
         <io>
@@ -213,8 +213,8 @@
     <test>
       <summary>
         <path>9</path>
-        <type>function</type>
-        <description>attribute::id</description>
+        <type>function only</type>
+        <description>attribute function with id</description>
       </summary>
       <records>
         <io>
@@ -326,7 +326,7 @@
             <type>input</type>
             <xml>
               <![CDATA[
-<a id='fuzz'>ddd<summary><a>fff<a/></summary></a>
+<a id='fuzz'>ddd<summary><a>fff</a></summary></a>
               ]]>
             </xml>
             <xpath>summary/a/text()</xpath>
@@ -448,7 +448,7 @@
       <summary>
         <path>18</path>
         <type>string only</type>
-        <description>a wildcard followed by a single element attribute</description>
+        <description>a wildcard followed by a single element attribute II</description>
       </summary>
       <records>
         <io>
@@ -474,7 +474,7 @@
       <summary>
         <path>19</path>
         <type>value only</type>
-        <description>select 1 descendent which matches //trust[@colour="red"]</description>
+        <description>select 1 descendent which matches element trust with id 45</description>
       </summary>
       <records>
         <io>
@@ -482,7 +482,7 @@
             <type>input</type>
             <xml>
               <![CDATA[
-<a>ddd<trust colour='red'>abc</trust><trust>fff</trust></a>
+<root>ddd<a><trust id='45'>abc</trust><ccc>rrr</ccc></a></root>
               ]]>
             </xml>
             <xpath>a/trust[@id='45']</xpath>
@@ -838,7 +838,33 @@
         </io>
       </records>
     </test>
-    <test>
+    <test>    <test>
+      <summary>
+        <path>17</path>
+        <type>multiple strings</type>
+        <description>a wildcard followed by a pair of element attributes</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45'>abc</trust><ccc id='66'>rrr</ccc></a></root>
+              ]]>
+            </xml>
+            <xpath>a/*/attribute::id</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>45,66</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+
       <summary>
         <path>33</path>
         <type>XML validation</type>
@@ -918,6 +944,192 @@
           <summary>
             <type>output</type>
             <name>s</name>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>36</path>
+        <type>attribute only</type>
+        <description>element predicate with attribute id returned </description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><s id='1'><f colour='red'>ttt</f></s><a></a><s id='2'><f colour='red'>rrr</f></s></root>
+              ]]>
+            </xml>
+            <xpath>*[f='rrr']</xpath>
+            <attribute>id</attribute>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>2</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>37</path>
+        <type>attribute only</type>
+        <description>element predicate using !=  with attribute id returned </description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><s id='1'><f colour='red'>ttt</f></s><a></a><s id='2'><f colour='red'>rrr</f></s></root>
+              ]]>
+            </xml>
+            <xpath>*[f!='rrr']</xpath>
+            <attribute>id</attribute>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>1</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>38</path>
+        <type>attribute only</type>
+        <description>element predicate using != with an empty string </description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><s id='1'><f colour='red'></f></s><a></a><s id='2'><f colour='red'>rrr</f></s></root>
+              ]]>
+            </xml>
+            <xpath>*[f!='']</xpath>
+            <attribute>id</attribute>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>2</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>39</path>
+        <type>multiple strings</type>
+        <description>nested element with self matching predicate</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<urls>
+  <summary>
+    <recordx_type>dynarex</recordx_type>
+    <format_mask>[!full_url] [!short_url]</format_mask>
+    <schema>urls/url(full_url, short_url)</schema>
+  </summary>
+  <records>
+    <url><full_url>weeb</full_url><short_url>dfs</short_url></url>
+    <url><full_url>red</full_url><short_url>gr</short_url></url>
+    <url><full_url>green</full_url><short_url>yw</short_url></url>
+    <url><full_url></full_url><short_url>nb</short_url></url>
+    <url><full_url></full_url><short_url>jh</short_url></url>
+  </records>
+</urls>
+              ]]>
+            </xml>
+            <xpath>records/url/full_url[.!='']/text()</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>weeb,red,green</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>40</path>
+        <type>xpath block</type>
+        <description>xpath using block</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<urls>
+  <summary>
+    <recordx_type>dynarex</recordx_type>
+    <format_mask>[!full_url] [!short_url]</format_mask>
+    <schema>urls/url(full_url, short_url)</schema>
+  </summary>
+  <records>
+    <url><full_url>weeb</full_url><short_url>dfs</short_url></url>
+    <url><full_url>red</full_url><short_url>gr</short_url></url>
+    <url><full_url>green</full_url><short_url>yw</short_url></url>
+    <url><full_url></full_url><short_url>nb</short_url></url>
+    <url><full_url></full_url><short_url>jh</short_url></url>
+  </records>
+</urls>
+              ]]>
+            </xml>
+            <xpath>records/url</xpath>
+            <block_fields>full_url short_url</block_fields>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>[["weeb", "dfs"], ["red", "gr"], ["green", "yw"], ["", "nb"], ["", "jh"]]</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>41</path>
+        <type>multiple values</type>
+        <description>multiple elements with predicate using or</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc colour='blue'>fff</ccc><trust id='48' colour='red'>yyy</trust></a></root>
+              ]]>
+            </xml>
+            <xpath>a/*[@colour='red' or @colour='blue']</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <values>abc,fff,yyy</values>
           </summary>
         </io>
       </records>

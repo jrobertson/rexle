@@ -3,8 +3,8 @@
 # file: test_rexle.rb
  
 require 'testdata'
-#require 'rexle'
-require '/home/james/learning/ruby/rexle'
+require 'rexle'
+#require '/home/james/learning/ruby/rexle'
 
 testdata = Testdata.new('testdata.xml')
 
@@ -36,7 +36,9 @@ testdata.paths do |path|
   end
 
   testdata.find_by('multiple values').each do |title|
+
     path.tested? title do |input, output|
+
       result = input.data('xml','xpath') do |xml, xpath|
         Rexle.new(xml).xpath(xpath).map(&:value).join(',')
       end
@@ -46,14 +48,13 @@ testdata.paths do |path|
     end
   end
 
-  testdata.find_by('string ony').each do |title|
+  testdata.find_by('string only').each do |title|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        r = Rexle.new(xml).xpath(xpath).first
-        puts r.inspect
-        r
+        Rexle.new(xml).xpath(xpath).first
       end
+
 
       expected = output.data('value')
       result == expected
@@ -134,10 +135,35 @@ testdata.paths do |path|
     end
   end
 
+
+  testdata.find_by('attribute only').each do |title|
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath','attribute') do |xml, xpath, name| 
+        Rexle.new(xml).xpath(xpath).first.attributes[name]
+      end
+
+      expected = output.data('value')
+      result == expected
+    end
+  end
+
+  testdata.find_by('xpath block').each do |title|
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath', 'block_fields') do |xml, xpath, block_fields| 
+        r = Rexle.new(xml).xpath("records/url") do |e| 
+          block_fields.split(/\s/).map{|x| e.text(x)}
+        end
+        r.inspect
+      end
+
+      expected = output.data('value')
+      result == expected
+    end
+  end
+
 end
 
 puts testdata.passed?
 puts testdata.score
-puts testdata.instance_variable_get(:@success).map.with_index.select{|x,i| x == false}.map(&:last)
-
-
+puts testdata.summary.inspect
+#puts testdata.success.inspect
