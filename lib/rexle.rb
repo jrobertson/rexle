@@ -49,7 +49,7 @@ class Rexle
   end
 
   class Element
-    attr_accessor :name, :value
+    attr_accessor :name, :value, :parent
     attr_reader :child_lookup
 
     def initialize(name=nil, value='', attributes={})
@@ -140,19 +140,27 @@ class Rexle
     def add_element(item)
       @child_lookup << [item.name, item.attributes, item.value]
       @child_elements << item
+      # add a reference from this element (the parent) to the child
+      item.parent = self
     end    
     
     alias add add_element
 
-    def attributes() @attributes end
-
-    def children() @child_elements end
-    
+    def add_attribute(h={}) @attributes.merge h end
+    def attributes() @attributes end    
+    def children() @child_elements end    
     def children=(a) @child_elements = a end
 
-    def element(s)
-      self.xpath(s).first
+    def delete(obj=nil)
+      if obj then
+        i = @child_elements.index(obj)
+        [@child_elements, @child_lookup].each{|x| x.delete_at i} if i
+      else
+        self.parent.delete self
+      end
     end
+
+    def element(s) self.xpath(s).first  end
 
     def text(s='')
       s.empty? ? @value : self.xpath(s).first.value
@@ -288,6 +296,7 @@ class Rexle
     self
   end
 
+  def delete(xpath) @doc.element(xpath).delete end
   def element(xpath) @doc.element(xpath) end
   def text(xpath) @doc.text(xpath) end
   def root() @doc end

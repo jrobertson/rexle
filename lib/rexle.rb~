@@ -291,6 +291,7 @@ class Rexle
   def element(xpath) @doc.element(xpath) end
   def text(xpath) @doc.text(xpath) end
   def root() @doc end
+  def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
   def xml()
     body = scan_print(self.root.children).join
     "<%s>%s</%s>" % [self.root.name, body, self.root.name]
