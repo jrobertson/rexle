@@ -342,6 +342,7 @@ class Rexle
   end
 
   def count(path) @doc.xpath(path).flatten.compact.length end
+  def max(path) @doc.xpath(path).map(&:to_i).max end
   
   # scan a rexml doc
   #
