@@ -76,15 +76,18 @@ class Rexle
       end
   
       elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
-      element_part, condition = elmnt_path.match(/(^@?[^\[]+)(\[[^\]]+\])?/).captures
 
-      unless element_part[/^@/] then
-        element_name = element_part
-      else
-        condition = element_part
-        element_name = nil
+      element_part, condition = elmnt_path.match(/(^@?[^\[]+)?(\[[^\]]+\])?/).captures
+
+      if element_part then
+        unless element_part[/^@/] then
+          element_name = element_part
+        else
+          condition = element_part
+          element_name = nil
+        end
       end
-      
+
       attr_search = format_attributes(condition) if condition
 
       if xpath_value[0,2] == '//'
@@ -166,6 +169,8 @@ class Rexle
       s.empty? ? @value : self.xpath(s).first.value
     end
 
+    alias text= value=
+
     private
 
     def scan_print(nodes)
@@ -226,6 +231,7 @@ class Rexle
     end
 
     def scan_match(nodes, element, attr_search, condition, rlist)
+
       nodes.children.each.with_index do |x, i|
 
         h = x.attributes
@@ -240,10 +246,13 @@ class Rexle
           end
         else
 
-          attribute = condition[/@(.*)/,1]
-  
-          if h.has_key? attribute then
-            rlist << h[attribute]
+          if condition[/^@/] then
+            attribute = condition[/@(.*)/,1]
+            if h.has_key? attribute then
+              rlist << h[attribute]
+            end
+          else
+            rlist << x if h and eval(attr_search)
           end
         end
     
