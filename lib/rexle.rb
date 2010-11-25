@@ -149,7 +149,7 @@ class Rexle
     
     alias add add_element
 
-    def add_attribute(h={}) @attributes.merge h end
+    def add_attribute(h={}) @attributes.merge! h end
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end
@@ -312,7 +312,8 @@ class Rexle
   def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
   def xml()
     body = scan_print(self.root.children).join
-    "<%s>%s</%s>" % [self.root.name, body, self.root.name]
+    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : a, body, self.root.name]
   end
 
   private
@@ -335,7 +336,9 @@ class Rexle
         RexleParser.new(x).to_a
       end
     else
-      RexleParser.new(x).to_a
+      RexleParser.new(x).to_achild_schema = 'b[name]'
+record = Rexle.new PolyrexSchema.new(child_schema).to_s
+record.root.add_attribute({'id' => @id.to_s})
     end
 
   end
