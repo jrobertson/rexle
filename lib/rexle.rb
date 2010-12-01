@@ -314,6 +314,7 @@ class Rexle
   def delete(xpath) @doc.element(xpath).delete end
   def element(xpath) @doc.element(xpath) end
   def text(xpath) @doc.text(xpath) end
+  def to_s() self.xml end
   def root() @doc end
   def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
   def xml()

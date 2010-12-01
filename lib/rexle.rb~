@@ -151,6 +151,7 @@ class Rexle
     alias add add_element
 
     def add_attribute(h={}) @attributes.merge! h end
+    def add_text(s) @value = s; self end
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end
