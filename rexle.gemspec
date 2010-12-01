@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '0.5.17'
+  s.version = '0.5.18'
   s.summary = 'rexle'
   s.files = Dir['lib/**/*.rb']
   s.add_dependency('rexleparser')

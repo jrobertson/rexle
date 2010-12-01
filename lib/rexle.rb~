@@ -145,6 +145,7 @@ class Rexle
       @child_elements << item
       # add a reference from this element (the parent) to the child
       item.parent = self
+      item
     end    
     
     alias add add_element
@@ -305,6 +306,10 @@ class Rexle
     self
   end
 
+  def add_element(element) @doc.root.add_element(element) end
+
+  alias add add_element
+
   def delete(xpath) @doc.element(xpath).delete end
   def element(xpath) @doc.element(xpath) end
   def text(xpath) @doc.text(xpath) end
@@ -313,7 +318,7 @@ class Rexle
   def xml()
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : a, body, self.root.name]
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
   end
 
   private
@@ -354,7 +359,7 @@ class Rexle
       tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
       out = ["<%s>" % tag]
-      out << x.value unless x.value.empty?
+      out << x.value unless x.value.nil? || x.value.empty?
       out << scan_print(x.children)
       out << "</%s>" % x.name    
     end
