@@ -145,6 +145,7 @@ class Rexle
       @child_elements << item
       # add a reference from this element (the parent) to the child
       item.parent = self
+      item
     end    
     
     alias add add_element
@@ -164,7 +165,7 @@ class Rexle
     end
 
     def element(s) self.xpath(s).first  end
-
+    def root() self end
     def text(s='')
       s.empty? ? @value : self.xpath(s).first.value
     end
@@ -305,6 +306,10 @@ class Rexle
     self
   end
 
+  def add_element(element) @doc.root.add_element(element) end
+
+  alias add add_element
+
   def delete(xpath) @doc.element(xpath).delete end
   def element(xpath) @doc.element(xpath) end
   def text(xpath) @doc.text(xpath) end
@@ -313,7 +318,7 @@ class Rexle
   def xml()
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : a, body, self.root.name]
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
   end
 
   private
@@ -336,9 +341,7 @@ class Rexle
         RexleParser.new(x).to_a
       end
     else
-      RexleParser.new(x).to_achild_schema = 'b[name]'
-record = Rexle.new PolyrexSchema.new(child_schema).to_s
-record.root.add_attribute({'id' => @id.to_s})
+      RexleParser.new(x).to_a
     end
 
   end
@@ -356,7 +359,7 @@ record.root.add_attribute({'id' => @id.to_s})
       tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
       out = ["<%s>" % tag]
-      out << x.value unless x.value.empty?
+      out << x.value unless x.value.nil? || x.value.empty?
       out << scan_print(x.children)
       out << "</%s>" % x.name    
     end

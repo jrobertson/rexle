@@ -76,15 +76,18 @@ class Rexle
       end
   
       elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
-      element_part, condition = elmnt_path.match(/(^@?[^\[]+)(\[[^\]]+\])?/).captures
 
-      unless element_part[/^@/] then
-        element_name = element_part
-      else
-        condition = element_part
-        element_name = nil
+      element_part, condition = elmnt_path.match(/(^@?[^\[]+)?(\[[^\]]+\])?/).captures
+
+      if element_part then
+        unless element_part[/^@/] then
+          element_name = element_part
+        else
+          condition = element_part
+          element_name = nil
+        end
       end
-      
+
       attr_search = format_attributes(condition) if condition
 
       if xpath_value[0,2] == '//'
@@ -146,7 +149,7 @@ class Rexle
     
     alias add add_element
 
-    def add_attribute(h={}) @attributes.merge h end
+    def add_attribute(h={}) @attributes.merge! h end
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end
@@ -161,10 +164,12 @@ class Rexle
     end
 
     def element(s) self.xpath(s).first  end
-
+    def root() self end
     def text(s='')
       s.empty? ? @value : self.xpath(s).first.value
     end
+
+    alias text= value=
 
     private
 
@@ -226,6 +231,7 @@ class Rexle
     end
 
     def scan_match(nodes, element, attr_search, condition, rlist)
+
       nodes.children.each.with_index do |x, i|
 
         h = x.attributes
@@ -240,10 +246,13 @@ class Rexle
           end
         else
 
-          attribute = condition[/@(.*)/,1]
-  
-          if h.has_key? attribute then
-            rlist << h[attribute]
+          if condition[/^@/] then
+            attribute = condition[/@(.*)/,1]
+            if h.has_key? attribute then
+              rlist << h[attribute]
+            end
+          else
+            rlist << x if h and eval(attr_search)
           end
         end
     
@@ -303,7 +312,8 @@ class Rexle
   def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
   def xml()
     body = scan_print(self.root.children).join
-    "<%s>%s</%s>" % [self.root.name, body, self.root.name]
+    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : a, body, self.root.name]
   end
 
   private
