@@ -109,7 +109,7 @@ class Rexle
           rlist << return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/'), &blk); (r || e) }
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
-def add_attribute(h={}) @attributes.merge! h end
+
             if rtn_element.is_a? Array then
               rtn_element
             elsif (rtn_element.is_a? String) || (rtn_element.is_a?(Array) and not(rtn_element[0].is_a? String))
@@ -134,7 +134,6 @@ def add_attribute(h={}) @attributes.merge! h end
         end
       end
 
-      #a.shift # added by jr 171110
       rlist = rlist.flatten(1) unless not(rlist.is_a? Array) or (rlist.length > 1 and rlist[0].is_a? Array)
       rlist = [rlist] if rlist.is_a? Rexle::Element
       rlist
@@ -150,7 +149,17 @@ def add_attribute(h={}) @attributes.merge! h end
     
     alias add add_element
 
-    def add_attribute(h={}) @attributes.merge! h end
+    def add_attribute(*x)
+
+      procs = {
+        Hash: lambda {|x| x[0] || {}},
+        String: lambda {|x| Hash[*x]}
+      }  
+      h = procs[x[0].class.to_s.to_sym].call(x)
+
+      @attributes.merge! h
+    end
+
     def add_text(s) @value = s; self end
     def attributes() @attributes end    
     def children() @child_elements end    
