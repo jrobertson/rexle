@@ -109,7 +109,7 @@ class Rexle
           rlist << return_elements.map.with_index do |x,i| 
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/'), &blk); (r || e) }
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
-
+def add_attribute(h={}) @attributes.merge! h end
             if rtn_element.is_a? Array then
               rtn_element
             elsif (rtn_element.is_a? String) || (rtn_element.is_a?(Array) and not(rtn_element[0].is_a? String))
@@ -166,6 +166,15 @@ class Rexle
     end
 
     def element(s) self.xpath(s).first  end
+
+    def elements(s=nil)
+      procs = {
+        NilClass: proc {Elements.new(@child_elements)},
+        String: proc {|x| @child_elements[x]}
+      }
+      procs[s.class.to_s.to_sym].call(s)      
+    end
+
     def root() self end
     def text(s='')
       s.empty? ? @value : self.xpath(s).first.value
@@ -288,6 +297,17 @@ class Rexle
 
   end # -- end of element --
 
+  class Elements
+    def initialize(elements=[])
+      @elements = elements
+    end
+
+    def [](i)
+      @elements[i-1]
+    end
+  end
+
+
   def parse(x=nil)
     
     a = []
@@ -312,9 +332,10 @@ class Rexle
   alias add add_element
 
   def delete(xpath) @doc.element(xpath).delete end
-  def element(xpath) @doc.element(xpath) end
-  def text(xpath) @doc.text(xpath) end
+  def element(xpath) @doc.element(xpath) end  
+  def elements(s=nil) @doc.elements(s) end
   def to_s() self.xml end
+  def text(xpath) @doc.text(xpath) end
   def root() @doc end
   def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
   def xml()
