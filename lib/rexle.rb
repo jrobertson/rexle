@@ -161,6 +161,7 @@ class Rexle
     end
 
     def add_text(s) @value = s; self end
+    def attribute(key) @attributes[key] end  
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end
@@ -184,9 +185,18 @@ class Rexle
       procs[s.class.to_s.to_sym].call(s)      
     end
 
+    def leaf_value(e, path)
+      (path[/\//] ? e.xpath(path).first : e).value
+    end
+
     def root() self end
     def text(s='')
-      s.empty? ? @value : self.xpath(s).first.value
+      if s.empty? then
+        @value
+      else
+        e = self.element(s)
+        e.value if e
+      end
     end
 
     alias text= value=
@@ -238,7 +248,7 @@ class Rexle
               if x[0] != '.' then
                 "name == '%s' and value %s %s" % [x[0], x[1], x[2]]
               else
-                "e.value %s %s" % [x[1], x[2]]
+                "leaf_value(e) %s %s" % [x[1], x[2]]
               end
             else
               x
@@ -314,7 +324,7 @@ class Rexle
     def [](i)
       @elements[i-1]
     end
-  end
+  end # -- end of elements --
 
 
   def parse(x=nil)
@@ -336,6 +346,9 @@ class Rexle
     self
   end
 
+  def add_attribute(x) @doc.attribute(x) end
+  def attribute(key) @doc.attribute(key) end
+  def attributes() @doc.attributes end
   def add_element(element) @doc.root.add_element(element) end
 
   alias add add_element
