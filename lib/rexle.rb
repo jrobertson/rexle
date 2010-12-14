@@ -11,7 +11,8 @@ include REXML
 class Rexle
 
   def initialize(x=nil)
-        
+    super()
+
     if x then
       procs = {
 	      String: proc {|x| parse_string(x)},
@@ -53,6 +54,7 @@ class Rexle
     attr_reader :child_lookup
 
     def initialize(name=nil, value='', attributes={})
+      super()
       @name, @value, @attributes = name, value, attributes
       raise "Element name must not be blank" unless name
       @child_elements = []
@@ -61,11 +63,16 @@ class Rexle
 
     def xpath(xpath_value, rlist=[], &blk)
 
-      a_path = xpath_value.split('/')
+      raw_path, raw_condition = xpath_value.sub(/^\/(?!\/)/,'').match(/([^\[]+)(\[[^\]]+\])?/).captures 
+      remaining_path = ($').to_s
+      a_path = raw_path.split('/')
 
-      if xpath_value[0,2] == '//' then
-        s = a_path[2]
-      elsif xpath_value == 'text()' then      
+      condition = raw_condition if a_path.length <= 1
+
+      if raw_path[0,2] == '//' then
+        s = a_path[2] || ''
+        condition = raw_condition
+      elsif raw_path == 'text()' then      
         a_path.shift
         return @value
       else
@@ -73,11 +80,10 @@ class Rexle
         return @attributes[attribute] if attribute and @attributes and @attributes.has_key?(attribute)
  
         s = a_path.shift
-      end
-  
-      elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
+      end      
 
-      element_part, condition = elmnt_path.match(/(^@?[^\[]+)?(\[[^\]]+\])?/).captures
+      elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
+      element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
       if element_part then
         unless element_part[/^@/] then
@@ -86,11 +92,14 @@ class Rexle
           condition = element_part
           element_name = nil
         end
+
       end
 
-      attr_search = format_attributes(condition) if condition
+      raw_condition = '' if condition
 
-      if xpath_value[0,2] == '//'
+      attr_search = format_condition(condition) if condition and condition.length > 0
+
+      if raw_path[0,2] == '//'
         return_elements = scan_match(self, element_name, attr_search, condition, rlist) 
         return (xpath_value[/text\(\)$/] ? return_elements.map(&:value) : return_elements)
       end
@@ -101,13 +110,13 @@ class Rexle
         
       if return_elements.length > 0 then
 
-        if a_path.empty? then
-          rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}
-          rlist = rlist[0] if rlist.length <= 1
+        if (a_path + [remaining_path]).join.empty? then
+          rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}.compact
+          rlist = rlist[0] if rlist.length == 1
         else
-          
+
           rlist << return_elements.map.with_index do |x,i| 
-            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/'), &blk); (r || e) }
+            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/') + raw_condition.to_s + remaining_path, &blk); (r || e) }
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
 
             if rtn_element.is_a? Array then
@@ -130,7 +139,7 @@ class Rexle
         new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
 
         if new_xpath then
-          self.xpath(new_xpath, rlist,&blk)
+          self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
         end
       end
 
@@ -185,10 +194,6 @@ class Rexle
       procs[s.class.to_s.to_sym].call(s)      
     end
 
-    def leaf_value(e, path)
-      (path[/\//] ? e.xpath(path).first : e).value
-    end
-
     def root() self end
     def text(s='')
       if s.empty? then
@@ -213,14 +218,14 @@ class Rexle
       out
     end
 
-    def format_attributes(condition)
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.]+/)
-   
+    def format_condition(condition)
+      raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.\/]+/)
+
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       else
 
-        andor_items = raw_items.map.with_index.select{|x,i| x[/and|or/]}.map{|x| [x.last, x.last + 1]}.flatten
+        andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten
 
         indices = [0] + andor_items + [raw_items.length]
 
@@ -229,6 +234,7 @@ class Rexle
           cons_items = indices.each_cons(2).map{|x,y| raw_items.slice(x...y)}          
 
           items = cons_items.map do |x| 
+
             if x.length >= 3 then
               x[1] = '==' if x[1] == '='
               "h['%s'] %s %s" % x
@@ -246,9 +252,15 @@ class Rexle
             if x.length >= 3 then
               x[1] = '==' if x[1] == '='
               if x[0] != '.' then
-                "name == '%s' and value %s %s" % [x[0], x[1], x[2]]
+                if x[0][/\//] then
+                  path, value = x.values_at(0,-1)
+
+                  "e.xpath('#{path}').first.value == #{value}"
+                else
+                  "name == '%s' and value %s %s" % [x[0], x[1], x[2]]
+                end
               else
-                "leaf_value(e) %s %s" % [x[1], x[2]]
+                "e.value %s %s" % [x[1], x[2]]
               end
             else
               x
@@ -307,8 +319,11 @@ class Rexle
           block_given? ? blk.call(e) : e
         elsif attr_search[/^e\.value/] and eval(attr_search)           
           block_given? ? blk.call(e) : e
+        elsif attr_search[/^e\.xpath/] and eval(attr_search)           
+          block_given? ? blk.call(e) : e
         end
       else
+
         block_given? ? blk.call(e) : e
       end
 
@@ -318,6 +333,7 @@ class Rexle
 
   class Elements
     def initialize(elements=[])
+      super()
       @elements = elements
     end
 

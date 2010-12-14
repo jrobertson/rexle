@@ -3,8 +3,8 @@
 # file: test_rexle.rb
  
 require 'testdata'
-require 'rexle'
-#require '/home/james/learning/ruby/rexle'
+#require 'rexle'
+require '/home/james/learning/ruby/rexle'
 
 testdata = Testdata.new('testdata.xml')
 
@@ -14,7 +14,7 @@ testdata.paths do |path|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        Rexle.new(xml).xpath(xpath).first.value 
+        Rexle.new(xml).element(xpath).value 
       end
 
       expected = output.data('value')
@@ -26,7 +26,7 @@ testdata.paths do |path|
   testdata.find_by('value and attribute').each do |title|
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        element = Rexle.new(xml).xpath(xpath).first
+        element = Rexle.new(xml).element(xpath)
         [element.value, element.attributes.inspect]
       end
 
@@ -52,7 +52,7 @@ testdata.paths do |path|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        Rexle.new(xml).xpath(xpath).first
+        Rexle.new(xml).element(xpath)
       end
 
 
@@ -90,7 +90,7 @@ testdata.paths do |path|
 
     path.tested? title do |input, output|
       result = input.data('xml','xpath') do |xml, xpath| 
-        Rexle.new(xml).xpath(xpath).first.name 
+        Rexle.new(xml).element(xpath).name 
       end
 
       expected = output.data('name')
@@ -139,7 +139,7 @@ testdata.paths do |path|
   testdata.find_by('attribute only').each do |title|
     path.tested? title do |input, output|
       result = input.data('xml','xpath','attribute') do |xml, xpath, name| 
-        Rexle.new(xml).xpath(xpath).first.attributes[name]
+        Rexle.new(xml).element(xpath).attributes[name]
       end
 
       expected = output.data('value')
@@ -157,6 +157,17 @@ testdata.paths do |path|
       end
 
       expected = output.data('value')
+      result == expected
+    end
+  end
+
+  testdata.find_by('nil only').each do |title|
+    path.tested? title do |input, output|
+      result = input.data('xml','xpath') do |xml, xpath| 
+        Rexle.new(xml).element(xpath)
+      end
+
+      expected = nil
       result == expected
     end
   end

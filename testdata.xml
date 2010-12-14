@@ -1134,5 +1134,181 @@
         </io>
       </records>
     </test>
+    <test>
+      <summary>
+        <path>42</path>
+        <type>multiple values</type>
+        <description>multiple elements with descendents on multiple levels</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><a><b>ttt</b></a><b>ggg</b></root>
+              ]]>
+            </xml>
+            <xpath>//b</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <values>ttt,ggg</values>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>43</path>
+        <type>multiple strings</type>
+        <description>decendents with multiples levels return text</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><a><b>ttt</b></a><b>ggg</b></root>
+              ]]>
+            </xml>
+            <xpath>//b/text()</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>ttt,ggg</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>44</path>
+        <type>multiple strings</type>
+        <description>descendents selected by attribute id</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root id='45'>eee<a id='44'><b id='88'>ttt</b></a><b id='33'>ggg</b></root>
+              ]]>
+            </xml>
+            <xpath>//@id</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>44,88,33</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>45</path>
+        <type>function only</type>
+        <description>max function</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><a id='10'>5<b id='12'>6</b></a><b id='4'>5</b></root>
+              ]]>
+            </xml>
+            <xpath>max(//@id)</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>12</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>46</path>
+        <type>value only</type>
+        <description>descdents matching id equal to 12</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><a id='10'>5<b id='12'>6</b></a><b id='4'>5</b></root>
+              ]]>
+            </xml>
+            <xpath>//[@id='12']</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>6</value>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>47</path>
+        <type>name only</type>
+        <description>nested path within predicate</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><records><section><summary>ttt<name>rrr</name></summary><f colour='red'>ttt</f></section></records><a></a></root>
+              ]]>
+            </xml>
+            <xpath>records/section[summary/name='rrr']</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <name>section</name>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>48</path>
+        <type>nil only</type>
+        <description>returns nil</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<root><records><section><summary>ttt<name>rrr</name></summary><f colour='red'>ttt</f></section></records><a></a></root>
+              ]]>
+            </xml>
+            <xpath>records/section[wer]</xpath>
+          </summary>
+        </io>
+      </records>
+    </test>
   </records>
 </tests>

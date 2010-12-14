@@ -185,6 +185,10 @@ class Rexle
       procs[s.class.to_s.to_sym].call(s)      
     end
 
+    def leaf_value(e, path)
+      (path[/\//] ? e.xpath(path).first : e).value
+    end
+
     def root() self end
     def text(s='')
       if s.empty? then
@@ -244,7 +248,7 @@ class Rexle
               if x[0] != '.' then
                 "name == '%s' and value %s %s" % [x[0], x[1], x[2]]
               else
-                "e.value %s %s" % [x[1], x[2]]
+                "leaf_value(e) %s %s" % [x[1], x[2]]
               end
             else
               x
