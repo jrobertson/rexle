@@ -267,4 +267,30 @@ a = rexle.xpath("records/url"){|e| %w(full_url short_url).map{|x| e.text(x)}}
 # 41) multiple elements with predicate using or
 s = "<root>ddd<a><trust id='45' colour='red'>abc<b>4444</b></trust><ccc colour='blue'>fff</ccc><trust id='48' colour='red'>yyy</trust></a></root>"
 doc = Rexle.new(s)
-a = doc.xpath("a/*[@colour='red' or @colour='blue']") 
+a = doc.xpath("a/*[@colour='red' or @colour='blue']")
+
+# 42) multiple elements with descendents on multiple levels
+s = "<root><a><b>ttt</b></a><b>ggg</b></root>"
+doc = Rexle.new(s).xpath('//b')
+
+# 43) decendents with multiples levels return text
+s = "<root><a><b>ttt</b></a><b>ggg</b></root>"
+doc = Rexle.new(s).xpath('//b/text()')
+
+# 44) descendents selected by attribute id
+s = "<root id='45'>eee<a id='44'><b id='88'>ttt</b></a><b id='33'>ggg</b></root>"
+doc = Rexle.new(s).xpath('//@id')
+
+# 45) max function
+s = "<root><a id='10'>5<b id='12'>6</b></a><b id='4'>5</b></root>"
+rexle = Rexle.new(s).xpath('max(//@id)')
+
+# 46) descdents matching id equal to 12
+s = "<root><a id='10'>5<b id='12'>6</b></a><b id='4'>5</b></root>"
+rexle = Rexle.new(s).xpath("//[@id='12']")
+
+# 47) nested path within predicate
+buffer = "<root><records><section><summary>ttt<name>rrr</name></summary><f colour='red'>ttt</f></section></records><a></a></root>"
+rexle = Rexle.new(buffer)
+rexle.element("records/section[summary/name='rrr']").name
+ 
