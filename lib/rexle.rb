@@ -204,6 +204,16 @@ class Rexle
       end
     end
 
+    def value=(s)
+      @value = s
+      a = self.parent.instance_variable_get(:@child_lookup)
+      if a then
+        i = a.index(a.assoc(@name))      
+        a[i][-1] = @value
+        self.parent.instance_variable_set(:@child_lookup, a)
+      end
+    end
+
     alias text= value=
 
     private
@@ -308,7 +318,7 @@ class Rexle
       x = raw_element
       e = @child_elements[x.last]
       h = x[0][1]  # <-- fetch the attributes
-
+      
       if attr_search then
         if attr_search.is_a? Fixnum then
           block_given? ? blk.call(e) : e if i == attr_search 
@@ -375,7 +385,11 @@ class Rexle
   def to_s() self.xml end
   def text(xpath) @doc.text(xpath) end
   def root() @doc end
-  def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
+
+  def write(f) 
+    f.write "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml 
+  end
+
   def xml()
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
