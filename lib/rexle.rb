@@ -396,7 +396,7 @@ class Rexle
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
     out = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
-    o[:pretty] == false ? out : PrettyXML::write out
+    o[:pretty] == false ? out : (PrettyXML::write out)
   end
 
   private
