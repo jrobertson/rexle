@@ -6,6 +6,7 @@ require 'rexml/document'
 require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
+require 'pretty-xml'
 include REXML
 
 class Rexle
@@ -391,11 +392,11 @@ class Rexle
   end
 
   def xml(options={})
-    o = {:pretty => false}.merge(options)
+    o.merge!{pretty: false}
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
     out = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
-    o[:pretty] == false ? out : (write out)
+    o[:pretty] == false ? out : PrettyXML::write out
   end
 
   private
