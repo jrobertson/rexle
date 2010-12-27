@@ -6,7 +6,9 @@ require 'rexml/document'
 require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
+require 'pretty-xml'
 include REXML
+include PrettyXML
 
 class Rexle
 
@@ -385,11 +387,17 @@ class Rexle
   def to_s() self.xml end
   def text(xpath) @doc.text(xpath) end
   def root() @doc end
-  def write() "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml end
-  def xml()
+
+  def write(f) 
+    f.write "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml 
+  end
+
+  def xml(options={})
+    o.merge!{pretty: false}
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+    out = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+    o[:pretty] == false ? out : write out
   end
 
   private

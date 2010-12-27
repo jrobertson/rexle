@@ -390,10 +390,12 @@ class Rexle
     f.write "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml 
   end
 
-  def xml()
+  def xml(options={})
+    o = {:pretty => false}.merge(options)
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+    out = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+    o[:pretty] == false ? out : (write out)
   end
 
   private
