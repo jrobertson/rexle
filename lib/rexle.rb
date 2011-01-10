@@ -301,7 +301,7 @@ class Rexle
 
           if condition[/^@/] then
             attribute = condition[/@(.*)/,1]
-            if h.has_key? attribute then
+            if h and h.has_key? attribute then
               rlist << h[attribute]
             end
           else
@@ -383,7 +383,7 @@ class Rexle
   def delete(xpath) @doc.element(xpath).delete end
   def element(xpath) @doc.element(xpath) end  
   def elements(s=nil) @doc.elements(s) end
-  def to_s() self.xml end
+  def to_s(options={}) self.xml options end
   def text(xpath) @doc.text(xpath) end
   def root() @doc end
 
@@ -392,7 +392,7 @@ class Rexle
   end
 
   def xml(options={})
-    o.merge!{pretty: false}
+    o = {pretty: false}.merge(options)
     body = scan_print(self.root.children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
     out = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
