@@ -838,33 +838,7 @@
         </io>
       </records>
     </test>
-    <test>    <test>
-      <summary>
-        <path>17</path>
-        <type>multiple strings</type>
-        <description>a wildcard followed by a pair of element attributes</description>
-      </summary>
-      <records>
-        <io>
-          <summary>
-            <type>input</type>
-            <xml>
-              <![CDATA[
-<root>ddd<a><trust id='45'>abc</trust><ccc id='66'>rrr</ccc></a></root>
-              ]]>
-            </xml>
-            <xpath>a/*/attribute::id</xpath>
-          </summary>
-        </io>
-        <io>
-          <summary>
-            <type>output</type>
-            <value>45,66</value>
-          </summary>
-        </io>
-      </records>
-    </test>
-
+    <test>
       <summary>
         <path>33</path>
         <type>XML validation</type>
@@ -1306,6 +1280,40 @@
               ]]>
             </xml>
             <xpath>records/section[wer]</xpath>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>49</path>
+        <type>XML validation</type>
+        <description>Opening a CData</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+&lt;root&gt;
+  &lt;apple&gt;
+    &lt;![CDATA[
+    123
+    ]]&gt;
+  &lt;/apple&gt;
+&lt;/root&gt;
+            </xml>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <xml>
+&lt;root&gt;&lt;apple&gt;
+    &lt;![CDATA[
+    123
+    ]]&gt;&lt;/apple&gt;&lt;/root&gt;
+            </xml>
           </summary>
         </io>
       </records>
