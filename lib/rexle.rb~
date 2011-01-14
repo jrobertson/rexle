@@ -301,7 +301,7 @@ class Rexle
 
           if condition[/^@/] then
             attribute = condition[/@(.*)/,1]
-            if h.has_key? attribute then
+            if h and h.has_key? attribute then
               rlist << h[attribute]
             end
           else
@@ -393,10 +393,8 @@ class Rexle
 
   def xml(options={})
     o = {pretty: false}.merge(options)
-    body = scan_print(self.root.children).join
-    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}  
-    out = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
-    o[:pretty] == false ? out : (PrettyXML::write out)
+    msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
+    "<?xml version='1.0' encoding='UTF-8'?>\n" +  method(msg).call(self.root.children)
   end
 
   private
@@ -430,16 +428,60 @@ class Rexle
     return element
   end
 
+  def doc_print(children)
+
+    body = scan_print(children).join
+    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+  end
+
+
+  def doc_pretty_print(children)
+
+    body = pretty_print(children,2).join
+    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
+    ind = "\n  "   
+    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]
+  end
+
+
+
   def scan_print(nodes)
 
     nodes.map do |x|
-      a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
-      tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+      unless x.name == '![' then
+        a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+        tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
-      out = ["<%s>" % tag]
-      out << x.value unless x.value.nil? || x.value.empty?
-      out << scan_print(x.children)
-      out << "</%s>" % x.name    
+        out = ["<%s>" % tag]
+        out << x.value unless x.value.nil? || x.value.empty?
+        out << scan_print(x.children)
+        out << "</%s>" % x.name
+      else    
+        "<![CDATA[%s]]>" % x.value
+      end
+    end
+
+  end
+
+  def pretty_print(nodes, indent='0')
+    indent = indent.to_i
+    nodes.map.with_index do |x, i|
+      unless x.name == '![' then
+        a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+        tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+
+        ind1 = x.children.length > 0 ? ("\n" + '  ' * indent) : ''
+        start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+        out = ["%s<%s>%s" % [start, tag, ind1]]
+
+        out << x.value.sub(/^[\n\s]+$/,'') unless x.value.nil? || x.value.empty?
+        out << pretty_print(x.children, (indent + 2).to_s.clone)
+        ind2 = x.children.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+        out << "%s</%s>" % [ind2, x.name]
+      else    
+        "<![CDATA[%s]]>" % x.value
+      end
     end
 
   end
