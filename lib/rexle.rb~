@@ -83,6 +83,7 @@ class Rexle
         s = a_path.shift
       end      
 
+      # isolate the xpath to return just the path to the current element
       elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
@@ -240,10 +241,13 @@ class Rexle
     end
 
     def format_condition(condition)
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.\/]+/)
+      #raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.\/]+/)
+      raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/]+/)
 
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
+      elsif raw_items[0] == 'position()' then
+        return "i %s %s" % raw_items[1..-1]
       else
 
         andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten
@@ -333,6 +337,8 @@ class Rexle
       if attr_search then
         if attr_search.is_a? Fixnum then
           block_given? ? blk.call(e) : e if i == attr_search 
+        elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
+          block_given? ? blk.call(e) : e
         elsif h and attr_search[/^h\[/] and eval(attr_search)
           block_given? ? blk.call(e) : e
         elsif attr_search[/^name ==/] and \
@@ -486,7 +492,7 @@ class Rexle
         out = ["%s<%s>%s" % [start, tag, ind1]]
 
         out << x.value.sub(/^[\n\s]+$/,'') unless x.value.nil? || x.value.empty?
-        out << pretty_print(x.children, (indent + 2).to_s.clone)
+        out << pretty_print(x.children, (indent + 1).to_s.clone)
         ind2 = x.children.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
         out << "%s</%s>" % [ind2, x.name]
       else    
