@@ -196,13 +196,23 @@ class Rexle
     end
 
     def root() self end
+
     def text(s='')
+
       if s.empty? then
-        @value
+        result = @value
       else
         e = self.element(s)
-        e.value if e
+        result = e.value if e
       end
+ 
+      def result.unescape()
+        s = self.clone
+        %w(&lt; < &gt; > &amp; &).each_slice(2){|x| s.gsub!(*x)}
+        s
+      end
+
+      result
     end
 
     def value=(s)
