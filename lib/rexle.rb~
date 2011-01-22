@@ -6,10 +6,69 @@ require 'rexml/document'
 require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
-require 'pretty-xml'
 include REXML
 
+module XMLhelper
+
+  def doc_print(children)
+
+    body = scan_print(children).join
+    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+  end
+
+  def doc_pretty_print(children)
+
+    body = pretty_print(children,2).join
+    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
+    ind = "\n  "   
+    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]
+  end
+
+  def scan_print(nodes)
+
+    nodes.map do |x|
+      unless x.name == '![' then
+        a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+        tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+
+        out = ["<%s>" % tag]
+        out << x.value unless x.value.nil? || x.value.empty?
+        out << scan_print(x.children)
+        out << "</%s>" % x.name
+      else    
+        "<![CDATA[%s]]>" % x.value
+      end
+    end
+
+  end
+
+  def pretty_print(nodes, indent='0')
+    indent = indent.to_i
+    nodes.map.with_index do |x, i|
+      unless x.name == '![' then
+        a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+        tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+
+        ind1 = x.children.length > 0 ? ("\n" + '  ' * indent) : ''
+        start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+        out = ["%s<%s>%s" % [start, tag, ind1]]
+
+        out << x.value.sub(/^[\n\s]+$/,'') unless x.value.nil? || x.value.empty?
+        out << pretty_print(x.children, (indent + 1).to_s.clone)
+        ind2 = x.children.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+        out << "%s</%s>" % [ind2, x.name]
+      else    
+        "<![CDATA[%s]]>" % x.value
+      end
+    end
+
+  end
+
+end
+
 class Rexle
+  include XMLhelper
 
   def initialize(x=nil)
     super()
@@ -51,6 +110,8 @@ class Rexle
   end
 
   class Element
+    include XMLhelper
+    
     attr_accessor :name, :value, :parent
     attr_reader :child_lookup
 
@@ -228,9 +289,17 @@ class Rexle
 
     alias text= value=
 
+    def xml(options={})
+      o = {pretty: false}.merge(options)
+      msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
+      method(msg).call(self.children)
+    end
+
+    # temp methods
+
     private
 
-    def scan_print(nodes)
+    def scan_print222(nodes)
       out = []
       nodes.each do |x|
         out << "<%s>" % x.name
@@ -295,6 +364,8 @@ class Rexle
           return items.join(' ')
         end
       end
+
+
     end
 
     def scan_match(nodes, element, attr_search, condition, rlist)
@@ -442,64 +513,6 @@ class Rexle
     element = Element.new(name, value, attributes)  
     children.each{|x| element.add_element scan_element(*x)} if children
     return element
-  end
-
-  def doc_print(children)
-
-    body = scan_print(children).join
-    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
-  end
-
-
-  def doc_pretty_print(children)
-
-    body = pretty_print(children,2).join
-    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
-    ind = "\n  "   
-    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]
-  end
-
-
-
-  def scan_print(nodes)
-
-    nodes.map do |x|
-      unless x.name == '![' then
-        a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
-        tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
-
-        out = ["<%s>" % tag]
-        out << x.value unless x.value.nil? || x.value.empty?
-        out << scan_print(x.children)
-        out << "</%s>" % x.name
-      else    
-        "<![CDATA[%s]]>" % x.value
-      end
-    end
-
-  end
-
-  def pretty_print(nodes, indent='0')
-    indent = indent.to_i
-    nodes.map.with_index do |x, i|
-      unless x.name == '![' then
-        a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
-        tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
-
-        ind1 = x.children.length > 0 ? ("\n" + '  ' * indent) : ''
-        start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''
-        out = ["%s<%s>%s" % [start, tag, ind1]]
-
-        out << x.value.sub(/^[\n\s]+$/,'') unless x.value.nil? || x.value.empty?
-        out << pretty_print(x.children, (indent + 1).to_s.clone)
-        ind2 = x.children.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
-        out << "%s</%s>" % [ind2, x.name]
-      else    
-        "<![CDATA[%s]]>" % x.value
-      end
-    end
-
   end
 
   def count(path) @doc.xpath(path).flatten.compact.length end

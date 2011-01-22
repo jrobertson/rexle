@@ -277,8 +277,8 @@ class Rexle
       result
     end
 
-    def value=(s)
-      @value = s
+    def value=(x)
+      @value = x.to_s
       a = self.parent.instance_variable_get(:@child_lookup)
       if a then
         i = a.index(a.assoc(@name))      
