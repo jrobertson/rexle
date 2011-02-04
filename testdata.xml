@@ -1,5 +1,11 @@
 <tests>
-  <summary/>
+  <summary>
+    <title>rexle testdata</title>
+    <recordx_type>polyrex</recordx_type>
+    <schema>tests/test[path,description]/io[type,*]</schema>
+    <script>/home/james/learning/ruby/test_rexle.rb</script>
+    <test_dir>/home/james/test-ruby/rexle</test_dir>
+  </summary>
   <records>
     <test>
       <summary>
@@ -1406,6 +1412,103 @@
 </root>
               ]]>
             </xml>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>52</path>
+        <description>return XML from a node</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<latest_posts>
+  <summary>
+    <recordx_type>polyrex</recordx_type>
+    <schema>latest_posts/posts[title]/entry[title]</schema>
+  </summary>
+  <records></records>
+</latest_posts>
+              ]]>
+            </xml>
+            <xpath>summary</xpath>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <xml>
+              <![CDATA[
+<summary><recordx_type>polyrex</recordx_type><schema>latest_posts/posts[title]/entry[title]</schema></summary>
+              ]]>
+            </xml>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>53</path>
+        <description>auto escape and unescaping text</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml>
+              <![CDATA[
+<abc><a></a></abc>
+              ]]>
+            </xml>
+            <element>a</element>
+            <value><![CDATA[<c>123</c>]]></value>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <escaped>
+              <![CDATA[
+<?xml version='1.0' encoding='UTF-8'?>
+<abc><a>&lt;c&gt;123&lt;/c&gt;</a></abc>
+              ]]>
+            </escaped>
+            <unescaped>
+              <![CDATA[
+<c>123</c>
+              ]]>
+            </unescaped>
+          </summary>
+        </io>
+      </records>
+    </test>
+    <test>
+      <summary>
+        <path>54</path>
+        <type>XML validation</type>
+        <description>return a value from a very basic example</description>
+      </summary>
+      <records>
+        <io>
+          <summary>
+            <type>input</type>
+            <xml><![CDATA[<a>123</a>]]></xml>
+          </summary>
+        </io>
+        <io>
+          <summary>
+            <type>output</type>
+            <value>
+              <![CDATA[
+<?xml version='1.0' encoding='UTF-8'?>
+<a>123</a>
+              ]]>
+            </value>
           </summary>
         </io>
       </records>

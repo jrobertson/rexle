@@ -6,8 +6,19 @@
 require '/home/james/learning/ruby/testdata'
 #require 'rexle'
 require '/home/james/learning/ruby/rexle'
+require 'logger'
 
-testdata = Testdata.new('testdata.xml')
+file = '~/test-ruby/rexle'
+this_path = File.expand_path(file)
+#FileUtils.mkdir_p this_path
+
+if this_path != Dir.pwd then
+  puts "you must run this from script #{this_path}" 
+  exit
+end
+
+#testdata = Testdata.new(this_path + '/.testdata')
+testdata = Testdata.new('/home/james/learning/ruby/testdata.xml', log: false)
 
 testdata.paths do |path|
 
@@ -118,7 +129,9 @@ testdata.paths do |path|
     path.tested? title do
 
       def path.test(xml)
-        Rexle.new(xml).xml
+        out = Rexle.new(xml).xml
+        puts 'out : ' + out.to_s
+        out
       end
 
     end
@@ -161,9 +174,47 @@ testdata.paths do |path|
     end
   end
 
+  testdata.find_by('pretty XML output').each do |title|
+
+    path.tested? title do
+
+      def path.test(xml)
+        Rexle.new(xml).xml pretty: true
+      end
+
+    end
+  end
+
+  path.tested? 'return XML from a node' do
+
+    def path.test(xml, xpath)
+      Rexle.new(xml).element(xpath).xml
+    end
+
+  end
+
+  path.tested? 'auto escape and unescaping text' do
+
+    def path.test(xml, element, value)
+
+      rexle = Rexle.new(xml)
+      rexle.element(element).text = value
+
+      escaped = rexle.xml
+      unescaped = rexle.element(element).text.unescape
+      log = Logger.new('escape.log')
+      log.debug 'escaped : ' + escaped
+      log.debug 'unescaped : ' + unescaped
+      [escaped, unescaped]
+    end
+
+  end
+
 end
+puts 'fun'
 
 puts testdata.passed?
 puts testdata.score
 puts testdata.summary.inspect
 #puts testdata.success.inspect
+puts 'finished'
