@@ -12,14 +12,14 @@ module XMLhelper
 
   def doc_print(children)
 
-    body = scan_print(children).join
+    body = children.empty? ? self.root.value : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
   end
 
   def doc_pretty_print(children)
 
-    body = pretty_print(children,2).join
+    body = children.empty? ? self.value : pretty_print(children,2).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     ind = "\n  "   
     "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]

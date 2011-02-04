@@ -277,8 +277,12 @@ class Rexle
       result
     end
 
-    def value=(x)
-      @value = x.to_s
+    def value=(raw_s)
+
+      @value = raw_s.to_s.clone
+      escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
+      escape_chars.each{|x| @value.gsub!(*x)}
+
       a = self.parent.instance_variable_get(:@child_lookup)
       if a then
         i = a.index(a.assoc(@name))      
