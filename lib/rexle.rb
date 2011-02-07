@@ -219,6 +219,10 @@ class Rexle
       item.parent = self
       item
     end    
+
+    def inspect()
+      "%s ... </>" % self.xml[/<[^>]+>/]
+    end
     
     alias add add_element
 
@@ -300,19 +304,8 @@ class Rexle
       method(msg).call(self.children)
     end
 
-    # temp methods
 
     private
-
-    def scan_print222(nodes)
-      out = []
-      nodes.each do |x|
-        out << "<%s>" % x.name
-        out << scan_print(x.children)
-        out << "</%s>" % x.name    
-      end
-      out
-    end
 
     def format_condition(condition)
       #raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.\/]+/)

@@ -79,6 +79,7 @@ class Rexle
 	      Array: proc {|x| x},
 	      :"REXML::Document" =>  proc {|x| scan_doc x.root}
       }
+
       a = procs[x.class.to_s.to_sym].call(x)
       @doc = scan_element(*a)      
     end
@@ -479,13 +480,16 @@ class Rexle
   def root() @doc end
 
   def write(f) 
-    f.write "<?xml version='1.0' encoding='UTF-8'?>\n"  + xml 
+    f.write xml 
   end
 
   def xml(options={})
-    o = {pretty: false}.merge(options)
+    o = {pretty: false, declaration: true}.merge(options)
     msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
-    "<?xml version='1.0' encoding='UTF-8'?>\n" +  method(msg).call(self.root.children)
+    r = ''
+    r = "<?xml version='1.0' encoding='UTF-8'?>\n" if o[:declaration] == true
+    r << method(msg).call(self.root.children)
+    r
   end
 
   private
@@ -524,7 +528,7 @@ class Rexle
   
   # scan a rexml doc
   #
-  def scan_doc(node)a = rexle.xpath("records/url"){|e| %w(full_url short_url).map{|x| e.text(x)}}
+  def scan_doc(node)
     children = node.elements.map {|child| scan_doc child}
     attributes = node.attributes.inject({}){|r,x| r.merge(Hash[*x])}
     [node.name, node.text.to_s, attributes, *children]
