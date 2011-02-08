@@ -349,7 +349,7 @@ class Rexle
 
                   "e.xpath('#{path}').first.value == #{value}"
                 else
-                  "name == '%s' and value %s %s" % [x[0], x[1], x[2]]
+                  "(name == '%s' and value %s %s)" % [x[0], x[1], x[2]]
                 end
               else
                 "e.value %s %s" % [x[1], x[2]]
@@ -402,7 +402,7 @@ class Rexle
       x = raw_element
       e = @child_elements[x.last]
       h = x[0][1]  # <-- fetch the attributes
-      
+
       if attr_search then
         if attr_search.is_a? Fixnum then
           block_given? ? blk.call(e) : e if i == attr_search 
@@ -410,7 +410,7 @@ class Rexle
           block_given? ? blk.call(e) : e
         elsif h and attr_search[/^h\[/] and eval(attr_search)
           block_given? ? blk.call(e) : e
-        elsif attr_search[/^name ==/] and \
+        elsif attr_search[/^\(name ==/] and \
             e.child_lookup.select{|name, attributes, value| eval(attr_search) }.length > 0
           block_given? ? blk.call(e) : e
         elsif attr_search[/^e\.value/] and eval(attr_search)           
