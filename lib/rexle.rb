@@ -140,7 +140,7 @@ class Rexle
         return @value
       else
         attribute = xpath_value[/^attribute::(.*)/,1] 
-        return @attributes[attribute] if attribute and @attributes and @attributes.has_key?(attribute)
+        return @attributes[attribute.to_sym] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
  
         s = a_path.shift
       end      
@@ -238,7 +238,7 @@ class Rexle
     end
 
     def add_text(s) @value = s; self end
-    def attribute(key) @attributes[key] end  
+    def attribute(key) @attributes[key.to_sym] end  
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end
@@ -384,8 +384,8 @@ class Rexle
 
           if condition[/^@/] then
             attribute = condition[/@(.*)/,1]
-            if h and h.has_key? attribute then
-              rlist << h[attribute]
+            if h and h.has_key? attribute.to_sym then
+              rlist << h[attribute.to_sym]
             end
           else
             rlist << x if h and eval(attr_search)

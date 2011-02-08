@@ -329,7 +329,7 @@ class Rexle
 
             if x.length >= 3 then
               x[1] = '==' if x[1] == '='
-              "h['%s'] %s %s" % x
+              "h[:%s] %s %s" % x
             else
               x
             end
