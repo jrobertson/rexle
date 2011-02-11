@@ -277,7 +277,7 @@ class Rexle
  
       def result.unescape()
         s = self.clone
-        %w(&lt; < &gt; > &amp; &).each_slice(2){|x| s.gsub!(*x)}
+        %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
         s
       end
 
