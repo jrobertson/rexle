@@ -230,8 +230,10 @@ class Rexle
 
       procs = {
         Hash: lambda {|x| x[0] || {}},
-        String: lambda {|x| Hash[*x]}
-      }  
+        String: lambda {|x| Hash[*x]},
+        Symbol: lambda {|x| Hash[*x]}
+      }
+
       h = procs[x[0].class.to_s.to_sym].call(x)
 
       @attributes.merge! h
@@ -275,7 +277,7 @@ class Rexle
  
       def result.unescape()
         s = self.clone
-        %w(&lt; < &gt; > &amp; &).each_slice(2){|x| s.gsub!(*x)}
+        %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
         s
       end
 
@@ -371,6 +373,7 @@ class Rexle
       nodes.children.each.with_index do |x, i|
 
         h = x.attributes
+
 
         if element and not(element.empty?) then
           if x.name == element
