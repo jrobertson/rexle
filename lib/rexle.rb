@@ -75,9 +75,9 @@ class Rexle
 
     if x then
       procs = {
-	      String: proc {|x| parse_string(x)},
-	      Array: proc {|x| x},
-	      :"REXML::Document" =>  proc {|x| scan_doc x.root}
+        String: proc {|x| parse_string(x)},
+        Array: proc {|x| x},
+        :"REXML::Document" =>  proc {|x| scan_doc x.root}
       }
 
       a = procs[x.class.to_s.to_sym].call(x)
@@ -92,7 +92,7 @@ class Rexle
     fn_match = path.match(/^(\w+)\(([^\)]+)\)$/)
 
     #    Array: proc {|x| x.flatten.compact}, 
-    if fn_match.nil? then      
+    if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
       procs = {
         Array: proc {|x| block_given? ? x : x.flatten }, 
         String: proc {|x| x},
@@ -104,6 +104,7 @@ class Rexle
       procs[result.class.to_s.to_sym].call(result)
       
     else
+      #puts 'fn ' + fn_match.captures.inspect
       m, xpath_value = fn_match.captures
       method(m.to_sym).call(xpath_value)
     end
@@ -126,21 +127,26 @@ class Rexle
 
     def xpath(xpath_value, rlist=[], &blk)
 
+      xpath_value.sub!(/^\[/,'*[')
+      #xpath_value.sub!(/^attribute::/,'*/attribute::')
+      #puts 'xpath_value : ' + xpath_value.to_s
       raw_path, raw_condition = xpath_value.sub(/^\/(?!\/)/,'').match(/([^\[]+)(\[[^\]]+\])?/).captures 
+
       remaining_path = ($').to_s
       a_path = raw_path.split('/')
 
       condition = raw_condition if a_path.length <= 1
 
       if raw_path[0,2] == '//' then
-        s = a_path[2] || ''
-        condition = raw_condition
-      elsif raw_path == 'text()' then      
+        s = ''
+      elsif raw_path == 'text()'        
         a_path.shift
         return @value
       else
-        attribute = xpath_value[/^attribute::(.*)/,1] 
-        return @attributes[attribute.to_sym] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
+        #puts 'xpath_value : ' + xpath_value.inspect
+        attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
+        #puts 'ddd : ' + @attributes.inspect
+        return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
  
         s = a_path.shift
       end      
@@ -159,27 +165,31 @@ class Rexle
 
       end
 
+      #element_name ||= '*'
       raw_condition = '' if condition
 
       attr_search = format_condition(condition) if condition and condition.length > 0
 
       if raw_path[0,2] == '//'
-        return_elements = scan_match(self, element_name, attr_search, condition, rlist) 
-        return (xpath_value[/text\(\)$/] ? return_elements.map(&:value) : return_elements)
+        return scan_match(self, xpath_value)
+      else
+
+        return_elements = @child_lookup.map.with_index.select do |x|
+          x[0][0] == element_name or element_name == '*'
+        end
+
       end
 
-      return_elements = @child_lookup.map.with_index.select do |x|
-        x[0][0] == element_name or element_name == '*'
-      end
-        
       if return_elements.length > 0 then
 
         if (a_path + [remaining_path]).join.empty? then
+
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}.compact
           rlist = rlist[0] if rlist.length == 1
         else
 
           rlist << return_elements.map.with_index do |x,i| 
+
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/') + raw_condition.to_s + remaining_path, &blk); (r || e) }
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
 
@@ -201,7 +211,7 @@ class Rexle
 
         # strip off the 1st element from the XPath
         new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
-
+                
         if new_xpath then
           self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
         end
@@ -368,42 +378,20 @@ class Rexle
 
     end
 
-    def scan_match(nodes, element, attr_search, condition, rlist)
-
-      nodes.children.each.with_index do |x, i|
-
-        h = x.attributes
-
-
-        if element and not(element.empty?) then
-          if x.name == element
-            if attr_search then
-              rlist << x if h and eval(attr_search)
-            else
-              rlist << x 
-            end
-          end
-        else
-
-          if condition[/^@/] then
-            attribute = condition[/@(.*)/,1]
-            if h and h.has_key? attribute.to_sym then
-              rlist << h[attribute.to_sym]
-            end
-          else
-            rlist << x if h and eval(attr_search)
-          end
-        end
     
-        x.xpath('//' + element.to_s + condition.to_s, rlist) unless x.children.empty?
-      end
-      rlist
-    end
+    def scan_match(node, xpath)
 
+      r = node.xpath(xpath[2..-1])
+      r << node.children.map {|n| scan_match(n, xpath)}
+
+      r
+    end
+    
     def filter(raw_element, i, attr_search, &blk)
 
       x = raw_element
       e = @child_elements[x.last]
+
       h = x[0][1]  # <-- fetch the attributes
 
       if attr_search then
@@ -413,8 +401,7 @@ class Rexle
           block_given? ? blk.call(e) : e
         elsif h and attr_search[/^h\[/] and eval(attr_search)
           block_given? ? blk.call(e) : e
-        elsif attr_search[/^\(name ==/] and \
-            e.child_lookup.select{|name, attributes, value| eval(attr_search) }.length > 0
+        elsif attr_search[/^\(name ==/] and  e.child_lookup.select{|name, attributes, value| eval(attr_search) }.length > 0
           block_given? ? blk.call(e) : e
         elsif attr_search[/^e\.value/] and eval(attr_search)           
           block_given? ? blk.call(e) : e
@@ -448,9 +435,9 @@ class Rexle
     
     if x then
       procs = {
-	      String: proc {|x| parse_string(x)},
-	      Array: proc {|x| x},
-	      :"REXML::Document" =>  proc {|x| scan_doc x.root}
+        String: proc {|x| parse_string(x)},
+        Array: proc {|x| x},
+        :"REXML::Document" =>  proc {|x| scan_doc x.root}
       }
       a = procs[x.class.to_s.to_sym].call(x)
     else    
@@ -469,7 +456,7 @@ class Rexle
   alias add add_element
 
   def delete(xpath) @doc.element(xpath).delete end
-  def element(xpath) @doc.element(xpath) end  
+  def element(xpath) self.xpath(xpath).first end  
   def elements(s=nil) @doc.elements(s) end
   def to_s(options={}) self.xml options end
   def text(xpath) @doc.text(xpath) end
@@ -519,8 +506,14 @@ class Rexle
     return element
   end
 
-  def count(path) @doc.xpath(path).flatten.compact.length end
-  def max(path) @doc.xpath(path).map(&:to_i).max end
+  def count(path)
+    #puts 'path : ' + path
+    length = @doc.xpath(path).flatten.compact.length
+    #puts 'length = ' + length
+    length
+  end
+  
+  def max(path) @doc.xpath(path).flatten.compact.map(&:to_i).max end
   
   # scan a rexml doc
   #
