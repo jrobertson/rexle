@@ -29,7 +29,7 @@ module XMLhelper
   def scan_print(nodes)
 
     nodes.map do |x|
-      #puts 'x: ' + x.class.to_s #+ ' name: ' + x.name.to_s 
+
       if x.is_a? Rexle::Element then
         unless x.name == '![' then
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
@@ -165,7 +165,6 @@ class Rexle
       #remove any prefixes
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
 
-      puts 'xpath_value : '  + xpath_value.inspect
       xpath_value.sub!(/^\[/,'*[')
       #xpath_value.sub!(/^attribute::/,'*/attribute::')
       raw_path, raw_condition = xpath_value.sub(/^\/(?!\/)/,'').match(/([^\[]+)(\[[^\]]+\])?/).captures 
@@ -181,8 +180,7 @@ class Rexle
         return @value
       else
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
-        puts 'attribute : ' + attribute.inspect
-        puts '@attributes ; ' + @attributes.inspect
+
         return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
  
         s = a_path.shift
@@ -207,12 +205,10 @@ class Rexle
 
       attr_search = format_condition(condition) if condition and condition.length > 0
       
-      puts 'attr_search : ' + attr_search.inspect
-
       if raw_path[0,2] == '//'
         return scan_match(self, xpath_value)
       else
-        puts "@child_lookup " + @child_lookup.inspect
+
         return_elements = @child_lookup.map.with_index.select do |x|
           x[0][0] == element_name or element_name == '*'
         end
@@ -433,7 +429,7 @@ class Rexle
 
       r = node.xpath(xpath[2..-1])
       r << node.children.map {|n| scan_match(n, xpath)}
-      #puts 'r: ' + r.inspect
+
       r
     end
     
@@ -554,7 +550,7 @@ class Rexle
   end
     
   def scan_element(name, value=nil, attributes=nil, *children)
-     #puts 'name : ' + name.inspect
+
     element = Element.new(name, value, attributes, self)  
 
     if children then
