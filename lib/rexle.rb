@@ -9,6 +9,11 @@ require 'polyrex-parser'
 include REXML
 
 
+# modifications:
+# 28-Au-2011: New line characters between elements are now preserved
+# 24-Jul-2011: Smybols are used for attribute keys instead of strings now
+# 18-Jun-2011: A Rexle document can now be added to another Rexle document 
+#                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
 module XMLhelper
 
   def doc_print(children)
@@ -29,7 +34,7 @@ module XMLhelper
   def scan_print(nodes)
 
     nodes.map do |x|
-
+      #puts 'x: ' + x.class.to_s #+ ' name: ' + x.name.to_s 
       if x.is_a? Rexle::Element then
         unless x.name == '![' then
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
@@ -152,11 +157,11 @@ class Rexle
       #puts 'zzz : ' + @rexle.prefixes.inspect
       #puts '@rexle : ' + @rexle.inspect
       if @rexle then
-  prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } if @rexle.prefixes.is_a? Array
-  #puts 'ppp: ' + prefix.inspect
-  prefix ? @name.sub(prefix + ':', '') : @name
+        prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } if @rexle.prefixes.is_a? Array
+        #puts 'ppp: ' + prefix.inspect
+        prefix ? @name.sub(prefix + ':', '') : @name
       else
-  @name
+        @name
       end
     end
     
@@ -203,8 +208,8 @@ class Rexle
       #element_name ||= '*'
       raw_condition = '' if condition
 
-      attr_search = format_condition(condition) if condition and condition.length > 0
-      
+      attr_search = format_condition(condition) if condition and condition.length > 0      
+
       if raw_path[0,2] == '//'
         return scan_match(self, xpath_value)
       else
@@ -429,7 +434,7 @@ class Rexle
 
       r = node.xpath(xpath[2..-1])
       r << node.children.map {|n| scan_match(n, xpath)}
-
+      #puts 'r: ' + r.inspect
       r
     end
     
@@ -550,7 +555,7 @@ class Rexle
   end
     
   def scan_element(name, value=nil, attributes=nil, *children)
-
+     #puts 'name : ' + name.inspect
     element = Element.new(name, value, attributes, self)  
 
     if children then
