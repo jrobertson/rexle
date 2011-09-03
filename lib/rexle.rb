@@ -10,6 +10,8 @@ include REXML
 
 
 # modifications:
+# 04-Sep-2011: Bug fix: xpath will now only return Rexle:elements  when
+#                * is used.
 # 03-Sep-2011: Implemented deep_clone as well as modifying clone to function 
 #                similar to REXML.
 # 28-Au-2011: New line characters between elements are now preserved
@@ -220,7 +222,7 @@ class Rexle
       else
 
         return_elements = @child_lookup.map.with_index.select do |x|
-          x[0][0] == element_name or element_name == '*'
+          x[0][0] == element_name or (element_name == '*' && x[0].is_a?(Array))
         end
 
       end
