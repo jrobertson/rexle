@@ -10,6 +10,8 @@ include REXML
 
 
 # modifications:
+# 03-Sep-2011: Implemented deep_clone as well as modifying clone to function 
+#                similar to REXML.
 # 28-Au-2011: New line characters between elements are now preserved
 # 24-Jul-2011: Smybols are used for attribute keys instead of strings now
 # 18-Jun-2011: A Rexle document can now be added to another Rexle document 
@@ -143,6 +145,8 @@ class Rexle
     
     attr_accessor :name, :value, :parent
     attr_reader :child_lookup
+    
+    alias original_clone clone
 
     def initialize(name=nil, value='', attributes={}, rexle=nil)
       @rexle = rexle      
@@ -211,7 +215,8 @@ class Rexle
       attr_search = format_condition(condition) if condition and condition.length > 0      
 
       if raw_path[0,2] == '//'
-        return scan_match(self, xpath_value)
+        rs = scan_match(self, xpath_value).flatten.compact
+        return rs
       else
 
         return_elements = @child_lookup.map.with_index.select do |x|
@@ -278,7 +283,11 @@ class Rexle
     end    
 
     def inspect()
+      if self.xml.length > 30 then
       "%s ... </>" % self.xml[/<[^>]+>/]
+      else
+        self.xml
+      end  
     end
     
     alias add add_element
@@ -301,8 +310,10 @@ class Rexle
     def attribute(key) @attributes[key] end  
     def attributes() @attributes end    
     def children() @child_elements end    
-    def children=(a) @child_elements = a end
-
+    def children=(a) @child_elements = a end            
+    def deep_clone() self.original_clone end
+    def clone() Element.new(@name, @value, @attributes) end
+          
     def delete(obj=nil)
       if obj then
         i = @child_elements.index(obj)
@@ -367,6 +378,7 @@ class Rexle
       method(msg).call(self.children)
     end
 
+    alias to_s xml
 
     private
 
@@ -433,7 +445,7 @@ class Rexle
     def scan_match(node, xpath)
 
       r = node.xpath(xpath[2..-1])
-      r << node.children.map {|n| scan_match(n, xpath)}
+      r << node.children.map {|n| scan_match(n, xpath) if n.is_a? Rexle::Element}
       #puts 'r: ' + r.inspect
       r
     end
