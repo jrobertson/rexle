@@ -349,6 +349,8 @@ class Rexle
         result = e.value if e
       end
  
+      result = CGI.unescape_html result
+      
       def result.unescape()
         s = self.clone
         %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
