@@ -6,6 +6,7 @@ require 'rexml/document'
 require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
+require 'cgi'
 include REXML
 
 
@@ -523,7 +524,11 @@ class Rexle
 
   alias add add_element
 
-  def delete(xpath) @doc.element(xpath).delete end
+  def delete(xpath)
+    e = @doc.element(xpath)
+    e.delete if e
+  end
+  
   def element(xpath) self.xpath(xpath).first end  
   def elements(s=nil) @doc.elements(s) end
   def name() @doc.root.name end
