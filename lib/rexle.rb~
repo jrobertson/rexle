@@ -23,10 +23,6 @@ include REXML
 #                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
 module XMLhelper
 
-  def putx(s)
-    #puts 'fun : ' + s
-  end
-
   def doc_print(children)
 
     body = children.empty? ? self.root.value : scan_print(children).join
@@ -46,7 +42,7 @@ module XMLhelper
   def scan_print(nodes)
 
     nodes.map do |x|
-      #puts 'x: ' + x.class.to_s #+ ' name: ' + x.name.to_s 
+
       if x.is_a? Rexle::Element then
         if x.name.chr != '!' then
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
@@ -116,12 +112,10 @@ class Rexle
       doc_node = ['doc','',{}]
       @a = procs[x.class.to_s.to_sym].call(x)
       @doc = scan_element(*(doc_node << @a))
-      #puts '@doc : ' + @doc.class.inspect
       
       # fetch the namespaces
       @prefixes = []
       if @doc.root.attributes then
-        #puts 'attrs : '  + @doc.root.attributes.inspect
         xmlns = @doc.root.attributes.select {|k,v| k[/^xmlns:/]}
         @prefixes = xmlns.keys.map{|x| x[/\w+$/]}
       end
@@ -130,7 +124,6 @@ class Rexle
   end
   
   def xpath(path,  &blk)
-    #puts 'doof' + @doc.class.inspect
     @doc.xpath(path,  &blk)
   end  
 
@@ -159,11 +152,9 @@ class Rexle
     def max(path) query_xpath(path).flatten.compact.map(&:to_i).max end
       
     def name()
-      #puts 'zzz : ' + @rexle.prefixes.inspect
-      #putx 'rexle : ' + @rexle.inspect
+
       if @rexle then
         prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } if @rexle.prefixes.is_a? Array
-        #puts 'ppp: ' + prefix.inspect
         prefix ? @name.sub(prefix + ':', '') : @name
       else
         @name
@@ -171,7 +162,6 @@ class Rexle
     end
     
     def xpath(path, rlist=[], &blk)
-      #puts 'fook: ' + @doc.class.inspect
       filter_xpath(path, rlist=[], &blk)
     end
     
@@ -190,15 +180,11 @@ class Rexle
 	  :"Rexle::Element" => proc {|x| [x]}
 	}
 	bucket = []
-	#puts 'boo;'
-	#puts '@doc ' + @doc.class.inspect
-	#puts (@doc.public_methods - Object.public_methods).sort.inspect
 	result = query_xpath(path, bucket, &blk)
-	#puts 'result : ' + result.inspect
 	procs[result.class.to_s.to_sym].call(result)
 	
       else
-	#puts 'fn ' + fn_match.captures.inspect
+
 	m, xpath_value = fn_match.captures
 	method(m.to_sym).call(xpath_value)
       end
@@ -211,10 +197,8 @@ class Rexle
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
       flag_func = false
       
-      #putx 'name : ' + @name.inspect
-      putx ' 22xpath_value : '  + raw_xpath_value.inspect
       xpath_value = raw_xpath_value.sub(/^\[/,'*[')
-      #puts 'xpath : ' + xpath_value
+
       if xpath_value[/^[\w\/]+\s*=.*/] then        
         flag_func = true
         xpath_value = raw_xpath_value.sub(/^\w+\s*=.*/,'.[\0]')
@@ -222,13 +206,12 @@ class Rexle
         #result = self.element xpath_value        
         #return [(result.is_a?(Rexle::Element) ? true : false)]
       end
-      #puts 'x22: '  + xpath_value.inspect
-      #xpath_value.sub!(/^attribute::/,'*/attribute::')
+
       raw_path, raw_condition = xpath_value.sub(/^\/(?!\/)/,'').match(/([^\[]+)(\[[^\]]+\])?/).captures 
 
       remaining_path = ($').to_s
       a_path = raw_path.split('/')     
-      putx ' a_path aftersplit ' + a_path.inspect
+
       condition = raw_condition if a_path.length <= 1
 
       if raw_path[0,2] == '//' then
@@ -242,12 +225,12 @@ class Rexle
         return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
  
         s = a_path.shift
-        #puts "a_path: %s; remaining_path: %s" % [a_path, remaining_path]
+
       end      
 
       # isolate the xpath to return just the path to the current element
       elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
-      putx ' element_path : ' + elmnt_path.inspect
+
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
       if element_part then
@@ -260,7 +243,6 @@ class Rexle
 
       end
 
-      #element_name ||= '*'
       raw_condition = '' if condition
 
       attr_search = format_condition(condition) if condition and condition.length > 0      
@@ -272,14 +254,10 @@ class Rexle
         return rs
       else
 
-
-          return_elements = @child_lookup.map.with_index.select do |x|
-            putx ' element_name : ' + element_name.inspect
-            putx ' x_ : ' + x.inspect
-            
-            (x[0][0] == element_name || element_name == '.') or \
-              (element_name == '*' && x[0].is_a?(Array))
-          end
+	return_elements = @child_lookup.map.with_index.select do |x|	  
+	  (x[0][0] == element_name || element_name == '.') or \
+	    (element_name == '*' && x[0].is_a?(Array))
+	end
       end
 
       if return_elements.length > 0 then
@@ -307,7 +285,7 @@ class Rexle
           rlist = rlist.flatten(1) unless rlist.length > 1 and rlist[0].is_a? Array
 
         end
-	putx 'rlist 3 ' + rlist.inspect
+
         rlist.compact! if rlist.is_a? Array
 
       else
@@ -319,7 +297,7 @@ class Rexle
           self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
         end
       end
-      putx ('rlist: ' + rlist.inspect)
+
       rlist = rlist.flatten(1) unless not(rlist.is_a? Array) or (rlist.length > 1 and rlist[0].is_a? Array)
       rlist = [rlist] if rlist.is_a? Rexle::Element
       rlist = (rlist.length > 0 ? true : false) if flag_func == true
@@ -469,7 +447,7 @@ class Rexle
               x[1] = '==' if x[1] == '='
               "h[:'%s'] %s %s" % x
             else
-              putx ('x: ' + x.inspect)
+
 	      x.join[/^(and|or)$/] ? x : ("h[:'%s']" % x)
             end
           end
@@ -518,14 +496,9 @@ class Rexle
     def filter(raw_element, i, attr_search, &blk)
 
       x = raw_element
-      putx 'x: ' + x.inspect
+
       e = @child_elements[x.last]
-
-      putx "@ e: %s; e.class: %s; attr_search: %s" % [e.inspect, e.class.to_s, attr_search.inspect]
-      name, value = e.name, e.value if e.is_a? Rexle::Element
-      putx "name: %s value: %s" % [name, value]
-
-    
+      name, value = e.name, e.value if e.is_a? Rexle::Element    
       h = x[0][1]  # <-- fetch the attributes
 
 
