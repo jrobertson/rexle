@@ -379,6 +379,7 @@ class Rexle
 
     def doc_root() @rexle.root end
     def each(&blk) @child_elements.each(&blk) end
+    def has_elements?() !self.children.empty? end
     def root() self end #@rexle.root end
 
     def text(s='')
