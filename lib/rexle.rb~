@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 22-Feb-2012: bug resolution: Deactivated the PolyrexParser; using RexleParser instead
 # 14-Jan-2012: Implemented Rexle::Elements#each
 # 21-Dec-2011: Bug fix: xpath modified to allow querying from the actual 
 # root rather than the 1st child element from the root
@@ -613,7 +614,8 @@ class Rexle
       if recordx_type then
         procs = {
           'dynarex' => proc {|x| DynarexParser.new(x).to_a},
-          'polyrex' => proc {|x| PolyrexParser.new(x).to_a}
+#jr210212 'polyrex' => proc {|x| PolyrexParser.new(x).to_a}
+          'polyrex' => proc {|x| RexleParser.new(x).to_a}
         }
         procs[recordx_type].call(x)
       else
