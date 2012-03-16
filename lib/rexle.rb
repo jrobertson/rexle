@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 16-Mar-2012: bug fix: Element names which contain a colon can now be selected
+#                in the xpath.
 # 22-Feb-2012: bug resolution: Deactivated the PolyrexParser; using RexleParser instead
 # 14-Jan-2012: Implemented Rexle::Elements#each
 # 21-Dec-2011: Bug fix: xpath modified to allow querying from the actual 
@@ -232,12 +234,12 @@ class Rexle
       end      
 
       # isolate the xpath to return just the path to the current element
-      elmnt_path = s[/^([\w\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
+      elmnt_path = s[/^([\w:\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
       if element_part then
         unless element_part[/^@/] then
-          element_name = element_part[/^[\w\*]+/]
+          element_name = element_part[/^[\w:\*]+/]
         else
           condition = element_part
           element_name = nil
@@ -294,7 +296,7 @@ class Rexle
       else
 
         # strip off the 1st element from the XPath
-        new_xpath = xpath_value[/^\/\/\w+\/(.*)/,1]
+        new_xpath = xpath_value[/^\/\/[\w:]+\/(.*)/,1]
                 
         if new_xpath then
           self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)

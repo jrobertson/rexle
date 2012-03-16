@@ -532,6 +532,8 @@ class Rexle
   end # -- end of element --
 
   class Elements
+    include Enumerable
+    
     def initialize(elements=[])
       super()
       @elements = elements
