@@ -51,10 +51,14 @@ module XMLhelper
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
           tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
-          out = ["<%s>" % tag]
-          out << x.value unless x.value.nil? || x.value.empty?
-          out << scan_print(x.children)
-          out << "</%s>" % x.name
+          if x.value.length > 0 or x.children.length > 0 then
+            out = ["<%s>" % tag]
+            out << x.value unless x.value.nil? || x.value.empty?
+            out << scan_print(x.children)
+            out << "</%s>" % x.name
+          else
+            out = ["<%s/>" % tag]
+          end
         elsif x.name == '!-' then
           "<!--%s-->" % x.value
         else
