@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 15-Apr-2012: bug fix: New element names are typecast as string
 # 16-Mar-2012: bug fix: Element names which contain a colon can now be selected
 #                in the xpath.
 # 22-Feb-2012: bug resolution: Deactivated the PolyrexParser; using RexleParser instead
@@ -149,7 +150,7 @@ class Rexle
     def initialize(name=nil, value='', attributes={}, rexle=nil)
       @rexle = rexle      
       super()
-      @name, @value, @attributes = name, value, attributes
+      @name, @value, @attributes = name.to_s, value, attributes
       raise "Element name must not be blank" unless name
       @child_elements = []
       @child_lookup = []
@@ -206,7 +207,7 @@ class Rexle
       #remove any pre'fixes
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
       flag_func = false
-      
+
       xpath_value = raw_xpath_value.sub(/^\[/,'*[')
 
       if xpath_value[/^[\w\/]+\s*=.*/] then        
@@ -219,9 +220,16 @@ class Rexle
 
       #xpath_value.sub!(/^attribute::/,'*/attribute::')
       raw_path, raw_condition = xpath_value.sub(/^\/(?!\/)/,'').match(/([^\[]+)(\[[^\]]+\])?/).captures 
-
+      
       remaining_path = ($').to_s
-      a_path = raw_path.split('/')     
+      
+      r = raw_path[/([^\/]+)(?=\/\/)/,1] 
+      if r then
+        a_path = raw_path.split(/(?=\/\/)/,2)
+      else
+        a_path = raw_path.split('/',2)
+      end
+      
       condition = raw_condition if a_path.length <= 1
 
       if raw_path[0,2] == '//' then
@@ -243,7 +251,7 @@ class Rexle
 
       if element_part then
         unless element_part[/^@/] then
-          element_name = element_part[/^[\w:\*]+/]
+          element_name = element_part[/^[\w:\*\.]+/]
         else
           condition = element_part
           element_name = nil
@@ -263,12 +271,14 @@ class Rexle
         return rs
       else
 
-        return_elements = @child_lookup.map.with_index.select do |x|          
+        return_elements = @child_lookup.map.with_index.select do |x|    
+
           (x[0][0] == element_name || element_name == '.') or \
             (element_name == '*' && x[0].is_a?(Array))
         end
 
       end
+      
 
       if return_elements.length > 0 then
 
