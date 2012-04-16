@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 15-Apr-2012: bug fix: New element names are typecast as string
 # 16-Mar-2012: bug fix: Element names which contain a colon can now be selected
 #                in the xpath.
 # 22-Feb-2012: bug resolution: Deactivated the PolyrexParser; using RexleParser instead
@@ -149,7 +150,7 @@ class Rexle
     def initialize(name=nil, value='', attributes={}, rexle=nil)
       @rexle = rexle      
       super()
-      @name, @value, @attributes = name, value, attributes
+      @name, @value, @attributes = name.to_s, value, attributes
       raise "Element name must not be blank" unless name
       @child_elements = []
       @child_lookup = []
