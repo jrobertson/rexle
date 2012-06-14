@@ -447,7 +447,7 @@ class Rexle
     def format_condition(condition)
 
       #raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.\/]+/)
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/]+/)
+      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/]+/)
 
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
