@@ -272,6 +272,8 @@ class Rexle
       if raw_path[0,2] == '//'
         rs = scan_match(self, xpath_value).flatten.compact
         return rs
+      elsif raw_path == '.' then
+        return  [self]        
       else
 
         return_elements = @child_lookup.map.with_index.select do |x|    

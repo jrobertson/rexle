@@ -192,18 +192,18 @@ class Rexle
           :"Rexle::Element" => proc {|x| [x]}
         }
         bucket = []
-
-        results = path.split('|').map do |xp|
+        raw_results = path.split('|').map do |xp|
           query_xpath(xp, bucket, &blk)
         end
-        procs[results.inject(&:+).class.to_s.to_sym].call(results)
+        results = raw_results.inject(&:+)
+        procs[results.class.to_s.to_sym].call(results)
         
       else
         m, xpath_value = fn_match.captures
         method(m.to_sym).call(xpath_value)
       end
 
-    end    
+    end     
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
 
