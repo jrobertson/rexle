@@ -195,6 +195,7 @@ class Rexle
         raw_results = path.split('|').map do |xp|
           query_xpath(xp, bucket, &blk)
         end
+        
         results = raw_results.inject(&:+)
         procs[results.class.to_s.to_sym].call(results)
         
@@ -272,6 +273,8 @@ class Rexle
       if raw_path[0,2] == '//'
         rs = scan_match(self, xpath_value).flatten.compact
         return rs
+      elsif raw_path == '.' then
+        return  [self]        
       else
 
         return_elements = @child_lookup.map.with_index.select do |x|    
