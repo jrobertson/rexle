@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 17-Jun-2012: a couple of new xpath things are supported '.' and '|'
 # 15-Apr-2012: bug fix: New element names are typecast as string
 # 16-Mar-2012: bug fix: Element names which contain a colon can now be selected
 #                in the xpath.
@@ -78,6 +79,7 @@ module XMLhelper
       if x.is_a? Rexle::Element then
         unless x.name == '![' then
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+          a ||= [] 
           tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
           ind1 = x.children.length > 0 ? ("\n" + '  ' * indent) : ''
@@ -105,7 +107,6 @@ class Rexle
 
   attr_reader :prefixes
 
-  def self.version() "1.1.1" end
   def initialize(x=nil)
     super()
 
@@ -118,10 +119,11 @@ class Rexle
       }
       
       doc_node = ['doc','',{}]
+  
 
       @a = procs[x.class.to_s.to_sym].call(x)
       @doc = scan_element(*(doc_node << @a))
-
+      
       # fetch the namespaces
       @prefixes = []
       if @doc.root.attributes then
@@ -130,9 +132,8 @@ class Rexle
         @prefixes = xmlns.keys.map{|x| x[/\w+$/]}
       end
 
-      
     end
-    
+
   end
   
   def xpath(path,  &blk)
@@ -185,7 +186,7 @@ class Rexle
       #    Array: proc {|x| x.flatten.compact}, 
       if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
         procs = {
-          Array: proc {|x| block_given? ? x : x.flatten }, 
+          Array: proc {|x| block_given? ? x : x.flatten.uniq }, 
           String: proc {|x| x},
           TrueClass: proc{|x| x},
           FalseClass: proc{|x| x},
@@ -193,10 +194,12 @@ class Rexle
         }
         bucket = []
         raw_results = path.split('|').map do |xp|
-          query_xpath(xp, bucket, &blk)
-        end
-        
-        results = raw_results.inject(&:+)
+          r3 = query_xpath(xp, bucket, &blk)
+          r3
+        end        
+
+        #results = raw_results.inject(&:+)
+        results = raw_results.last
         procs[results.class.to_s.to_sym].call(results)
         
       else
@@ -204,7 +207,7 @@ class Rexle
         method(m.to_sym).call(xpath_value)
       end
 
-    end     
+    end    
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
 
@@ -213,17 +216,21 @@ class Rexle
       flag_func = false
 
       xpath_value = raw_xpath_value.sub(/^\[/,'*[')
+      #xpath_value.sub!(/\.\/(?=[\/])/,'')
 
       if xpath_value[/^[\w\/]+\s*=.*/] then        
         flag_func = true
-        xpath_value = raw_xpath_value.sub(/^\w+\s*=.*/,'.[\0]')
-        xpath_value = raw_xpath_value.sub(/\/([\w]+\s*=.*)/,'[\1]')
+
+        xpath_value.sub!(/^\w+\s*=.*/,'.[\0]')
+        xpath_value.sub!(/\/([\w]+\s*=.*)/,'[\1]')
+
         #result = self.element xpath_value        
         #return [(result.is_a?(Rexle::Element) ? true : false)]
       end
 
       #xpath_value.sub!(/^attribute::/,'*/attribute::')
-      raw_path, raw_condition = xpath_value.sub(/^\/(?!\/)/,'').match(/([^\[]+)(\[[^\]]+\])?/).captures 
+      raw_path, raw_condition = xpath_value.sub(/^\.?\/(?!\/)/,'')\
+          .match(/([^\[]+)(\[[^\]]+\])?/).captures 
       
       remaining_path = ($').to_s
       
@@ -243,9 +250,7 @@ class Rexle
         return @value
       else
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
-
         return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
- 
         s = a_path.shift
       end      
 
@@ -269,19 +274,20 @@ class Rexle
       attr_search = format_condition(condition) if condition and condition.length > 0      
       
       return_elements = []
-      
-      if raw_path[0,2] == '//'
+
+      if raw_path[0,2] == '//' then
         rs = scan_match(self, xpath_value).flatten.compact
         return rs
-      elsif raw_path == '.' then
-        return  [self]        
+      elsif (raw_path == '.' or raw_path == self.name) and attr_search.nil? then
+        return  [self]
       else
 
-        return_elements = @child_lookup.map.with_index.select do |x|    
 
-          (x[0][0] == element_name || element_name == '.') or \
-            (element_name == '*' && x[0].is_a?(Array))
-        end
+          return_elements = @child_lookup.map.with_index.select do |x|    
+
+            (x[0][0] == element_name || element_name == '.') or \
+              (element_name == '*' && x[0].is_a?(Array))
+          end
 
       end
       
@@ -307,6 +313,7 @@ class Rexle
             end
           end
           #
+
           rlist = rlist.flatten(1) unless rlist.length > 1 and rlist[0].is_a? Array
 
         end
@@ -317,7 +324,7 @@ class Rexle
 
         # strip off the 1st element from the XPath
         new_xpath = xpath_value[/^\/\/[\w:]+\/(.*)/,1]
-                
+
         if new_xpath then
           self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
         end
@@ -345,7 +352,6 @@ class Rexle
     end    
 
     def inspect()
-
       if self.xml.length > 30 then
       "%s ... </>" % self.xml[/<[^>]+>/]
       else
@@ -426,7 +432,7 @@ class Rexle
 
     def value=(raw_s)
 
-      @value = raw_s.to_s.clone
+      @value = String.new(raw_s.to_s.clone)
       escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
       escape_chars.each{|x| @value.gsub!(*x)}
 
@@ -452,7 +458,6 @@ class Rexle
 
     def format_condition(condition)
 
-      #raw_items = condition[1..-1].scan(/\'[^\']*\'|and|or|\d+|[!=]+|[@\w\.\/]+/)
       raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/]+/)
 
       if raw_items[0][/^\d+$/] then
@@ -638,14 +643,16 @@ class Rexle
       if recordx_type then
         procs = {
           'dynarex' => proc {|x| DynarexParser.new(x).to_a},
-#jr210212 'polyrex' => proc {|x| PolyrexParser.new(x).to_a}
+          'polyrex' => proc {|x| PolyrexParser.new(x).to_a},
           'polyrex' => proc {|x| RexleParser.new(x).to_a}
         }
         procs[recordx_type].call(x)
       else
+
         RexleParser.new(x).to_a
       end
     else
+
       RexleParser.new(x).to_a
     end
 

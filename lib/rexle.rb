@@ -200,7 +200,7 @@ class Rexle
 
         #results = raw_results.inject(&:+)
         results = raw_results.last
-        procs[results.class.to_s.to_sym].call(results)
+        procs[results.class.to_s.to_sym].call(results) if results
         
       else
         m, xpath_value = fn_match.captures
@@ -213,9 +213,9 @@ class Rexle
 
       #remove any pre'fixes
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
-      flag_func = false
+      flag_func = false            
 
-      xpath_value = raw_xpath_value.sub(/^\[/,'*[')
+      xpath_value = raw_xpath_value #.sub(/^\[/,'*[')
       #xpath_value.sub!(/\.\/(?=[\/])/,'')
 
       if xpath_value[/^[\w\/]+\s*=.*/] then        
@@ -231,7 +231,7 @@ class Rexle
       #xpath_value.sub!(/^attribute::/,'*/attribute::')
       raw_path, raw_condition = xpath_value.sub(/^\.?\/(?!\/)/,'')\
           .match(/([^\[]+)(\[[^\]]+\])?/).captures 
-      
+
       remaining_path = ($').to_s
       
       r = raw_path[/([^\/]+)(?=\/\/)/,1] 
@@ -249,20 +249,24 @@ class Rexle
         a_path.shift
         return @value
       else
+
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
+
         return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
         s = a_path.shift
       end      
 
       # isolate the xpath to return just the path to the current element
+
       elmnt_path = s[/^([\w:\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
-
+      
       if element_part then
         unless element_part[/^@/] then
           element_name = element_part[/^[\w:\*\.]+/]
         else
-          condition = element_part
+
+          condition = xpath_value[/^\[/] ? xpath_value : element_part
           element_name = nil
         end
 
@@ -270,8 +274,13 @@ class Rexle
 
       #element_name ||= '*'
       raw_condition = '' if condition
-
       attr_search = format_condition(condition) if condition and condition.length > 0      
+      
+      attr_search2 = xpath_value[/^\[(.*)\]$/,1]
+      if attr_search2 then        
+        r4 = attribute_search(attr_search, self, self.attributes)
+        return r4
+      end      
       
       return_elements = []
 
@@ -282,15 +291,13 @@ class Rexle
         return  [self]
       else
 
-
-          return_elements = @child_lookup.map.with_index.select do |x|    
-
-            (x[0][0] == element_name || element_name == '.') or \
-              (element_name == '*' && x[0].is_a?(Array))
-          end
+        return_elements = @child_lookup.map.with_index.select do |x|    
+          (x[0][0] == element_name || element_name == '.') or \
+            (element_name == '*' && x[0].is_a?(Array))
+        end
 
       end
-      
+
 
       if return_elements.length > 0 then
 
@@ -520,7 +527,8 @@ class Rexle
     
     def scan_match(node, xpath)
 
-      r = node.xpath(xpath[2..-1])
+      #r = node.xpath(xpath[2..-1].sub(/^\w+\/?/,''))
+      r = node.xpath(xpath[2..-1]) || []
       r << node.children.map {|n| scan_match(n, xpath) if n.is_a? Rexle::Element}
       r
     end
@@ -534,21 +542,7 @@ class Rexle
       h = x[0][1]  # <-- fetch the attributes      
       
       if attr_search then
-        if attr_search.is_a? Fixnum then
-          block_given? ? blk.call(e) : e if i == attr_search 
-        elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
-          block_given? ? blk.call(e) : e
-        elsif h and attr_search[/^h\[/] and eval(attr_search)
-          block_given? ? blk.call(e) : e
-        elsif attr_search[/^\(name ==/] and e.child_lookup.select{|name, attributes, value| eval(attr_search) }.length > 0
-          block_given? ? blk.call(e) : e
-        elsif attr_search[/^\(name ==/] and eval(attr_search) 
-          block_given? ? blk.call(e) : e          
-        elsif attr_search[/^e\.value/] and eval(attr_search)           
-          block_given? ? blk.call(e) : e
-        elsif attr_search[/^e\.xpath/] and eval(attr_search)           
-          block_given? ? blk.call(e) : e
-        end
+        attribute_search(attr_search,e, h, i, &blk)
       else
 
         block_given? ? blk.call(e) : e
@@ -556,6 +550,23 @@ class Rexle
 
     end
 
+    def attribute_search(attr_search, e, h, i=nil, &blk)
+      if attr_search.is_a? Fixnum then
+        block_given? ? blk.call(e) : e if i == attr_search 
+      elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
+        block_given? ? blk.call(e) : e
+      elsif h and attr_search[/^h\[/] and eval(attr_search)
+        block_given? ? blk.call(e) : e
+      elsif attr_search[/^\(name ==/] and e.child_lookup.select{|name, attributes, value| eval(attr_search) }.length > 0
+        block_given? ? blk.call(e) : e
+      elsif attr_search[/^\(name ==/] and eval(attr_search) 
+        block_given? ? blk.call(e) : e          
+      elsif attr_search[/^e\.value/] and eval(attr_search)           
+        block_given? ? blk.call(e) : e
+      elsif attr_search[/^e\.xpath/] and eval(attr_search)           
+        block_given? ? blk.call(e) : e
+      end      
+    end
   end # -- end of element --
 
   class Elements
