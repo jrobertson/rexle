@@ -525,11 +525,14 @@ class Rexle
     end
 
     
-    def scan_match(node, xpath)
+    def scan_match(node, path)
 
-      #r = node.xpath(xpath[2..-1].sub(/^\w+\/?/,''))
-      r = node.xpath(xpath[2..-1]) || []
-      r << node.children.map {|n| scan_match(n, xpath) if n.is_a? Rexle::Element}
+      r = []
+      xpath2 = path[2..-1] 
+      xpath2.sub!(/^\w+/,'').sub!(/^\//,'') if xpath2[/^\w+/] == self.name
+
+      r << node.xpath(xpath2)
+      r << node.children.map {|n| scan_match(n, path) if n.is_a? Rexle::Element}
       r
     end
     
