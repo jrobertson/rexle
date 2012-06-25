@@ -384,7 +384,11 @@ class Rexle
 
     def add_text(s) @value = s; self end
     
-    def attribute(key) @attributes[key] end  
+    def attribute(key) 
+      key = key.to_sym if key.is_a? String
+      @attributes[key].gsub('&lt;','<').gsub('&gt;','>')
+    end
+    
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end            

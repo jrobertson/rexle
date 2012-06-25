@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 19-Jun-2012: a bug fix for .//*[@class]
 # 17-Jun-2012: a couple of new xpath things are supported '.' and '|'
 # 15-Apr-2012: bug fix: New element names are typecast as string
 # 16-Mar-2012: bug fix: Element names which contain a colon can now be selected
@@ -175,7 +176,8 @@ class Rexle
     end
     
     def xpath(path, rlist=[], &blk)
-      filter_xpath(path, rlist=[], &blk)
+      r = filter_xpath(path, rlist=[], &blk)
+      r.is_a?(Array) ? r.compact : r      
     end
     
     def filter_xpath(path, rlist=[], &blk)
@@ -194,9 +196,8 @@ class Rexle
         }
         bucket = []
         raw_results = path.split('|').map do |xp|
-          r3 = query_xpath(xp, bucket, &blk)
-          r3
-        end        
+          query_xpath(xp, bucket, &blk)
+        end
 
         #results = raw_results.inject(&:+)
         results = raw_results.last
@@ -529,7 +530,10 @@ class Rexle
 
       r = []
       xpath2 = path[2..-1] 
+      xpath2.sub!(/^\*\//,'')
+      xpath2.sub!(/^\*/,self.name)
       xpath2.sub!(/^\w+/,'').sub!(/^\//,'') if xpath2[/^\w+/] == self.name
+      
 
       r << node.xpath(xpath2)
       r << node.children.map {|n| scan_match(n, path) if n.is_a? Rexle::Element}
