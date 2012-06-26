@@ -1,13 +1,21 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 # file: rexle.rb
 
 require 'rexml/document'
-require 'rexleparser'
-require 'dynarex-parser'
-require 'polyrex-parser'
 require 'cgi'
 include REXML
+
+require 'requestor'
+
+code = Requestor.read('http://rorbuilder.info/r/ruby') do |x| 
+  x.require 'rexleparser'
+  x.require 'dynarex-parser'
+  x.require 'polyrex-parser'
+end
+
+eval code
+
 
 # modifications:
 # 19-Jun-2012: a bug fix for .//*[@class]
@@ -286,8 +294,14 @@ class Rexle
       return_elements = []
 
       if raw_path[0,2] == '//' then
+
+        regex = /\[(\d+)\]/
+        n = xpath_value[regex,1]
+        xpath_value.slice!(regex)
+        
         rs = scan_match(self, xpath_value).flatten.compact
-        return rs
+        return n ? rs[n.to_i-1] : rs
+
       elsif (raw_path == '.' or raw_path == self.name) and attr_search.nil? then
         return  [self]
       else
@@ -298,7 +312,6 @@ class Rexle
         end
 
       end
-
 
       if return_elements.length > 0 then
 
@@ -384,7 +397,11 @@ class Rexle
 
     def add_text(s) @value = s; self end
     
-    def attribute(key) @attributes[key] end  
+    def attribute(key) 
+      key = key.to_sym if key.is_a? String
+      @attributes[key].gsub('&lt;','<').gsub('&gt;','>')
+    end  
+    
     def attributes() @attributes end    
     def children() @child_elements end    
     def children=(a) @child_elements = a end            
@@ -466,12 +483,13 @@ class Rexle
 
     def format_condition(condition)
 
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/]+/)
+      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/&;]+/)
 
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       elsif raw_items[0] == 'position()' then
-        return "i %s %s" % raw_items[1..-1]
+        rrr = "i %s %s" % raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
+        return rrr
       else
 
         andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten

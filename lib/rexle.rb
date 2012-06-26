@@ -27,6 +27,7 @@ include REXML
 # 24-Jul-2011: Smybols are used for attribute keys instead of strings now
 # 18-Jun-2011: A Rexle document can now be added to another Rexle document 
 #                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
+s
 module XMLhelper
 
   def doc_print(children)
@@ -286,8 +287,14 @@ class Rexle
       return_elements = []
 
       if raw_path[0,2] == '//' then
+
+        regex = /\[(\d+)\]/
+        n = xpath_value[regex,1]
+        xpath_value.slice!(regex)
+        
         rs = scan_match(self, xpath_value).flatten.compact
-        return rs
+        return n ? rs[n.to_i-1] : rs
+
       elsif (raw_path == '.' or raw_path == self.name) and attr_search.nil? then
         return  [self]
       else
@@ -298,7 +305,6 @@ class Rexle
         end
 
       end
-
 
       if return_elements.length > 0 then
 
@@ -387,7 +393,7 @@ class Rexle
     def attribute(key) 
       key = key.to_sym if key.is_a? String
       @attributes[key].gsub('&lt;','<').gsub('&gt;','>')
-    end
+    end  
     
     def attributes() @attributes end    
     def children() @child_elements end    
@@ -470,12 +476,13 @@ class Rexle
 
     def format_condition(condition)
 
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/]+/)
+      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/&;]+/)
 
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       elsif raw_items[0] == 'position()' then
-        return "i %s %s" % raw_items[1..-1]
+        rrr = "i %s %s" % raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
+        return rrr
       else
 
         andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten
