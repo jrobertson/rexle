@@ -481,7 +481,7 @@ class Rexle
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       elsif raw_items[0] == 'position()' then
-        rrr = "i %s %s" % raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
+        rrr = "i %s %s" % [raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
         return rrr
       else
 

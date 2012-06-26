@@ -1,21 +1,13 @@
-#!/usr/bin/env ruby
+#!/usr/bin/ruby
 
 # file: rexle.rb
 
 require 'rexml/document'
+require 'rexleparser'
+require 'dynarex-parser'
+require 'polyrex-parser'
 require 'cgi'
 include REXML
-
-require 'requestor'
-
-code = Requestor.read('http://rorbuilder.info/r/ruby') do |x| 
-  x.require 'rexleparser'
-  x.require 'dynarex-parser'
-  x.require 'polyrex-parser'
-end
-
-eval code
-
 
 # modifications:
 # 19-Jun-2012: a bug fix for .//*[@class]
@@ -35,6 +27,7 @@ eval code
 # 24-Jul-2011: Smybols are used for attribute keys instead of strings now
 # 18-Jun-2011: A Rexle document can now be added to another Rexle document 
 #                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
+s
 module XMLhelper
 
   def doc_print(children)
