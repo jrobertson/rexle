@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '0.9.33'
+  s.version = '0.9.34'
   s.summary = 'rexle'
   s.files = Dir['lib/**/*.rb']
   s.authors = ['James Robertson']
