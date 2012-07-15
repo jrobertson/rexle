@@ -27,7 +27,7 @@ include REXML
 # 24-Jul-2011: Smybols are used for attribute keys instead of strings now
 # 18-Jun-2011: A Rexle document can now be added to another Rexle document 
 #                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
-s
+
 module XMLhelper
 
   def doc_print(children)
