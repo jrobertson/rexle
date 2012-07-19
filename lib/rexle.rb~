@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 # file: rexle.rb
 
@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 15-Jul-2012: bug fix: self.root.value is no longer appended
+#                 to the body if there are no child elements
 # 19-Jun-2012: a bug fix for .//*[@class]
 # 17-Jun-2012: a couple of new xpath things are supported '.' and '|'
 # 15-Apr-2012: bug fix: New element names are typecast as string
@@ -27,15 +29,13 @@ include REXML
 # 24-Jul-2011: Smybols are used for attribute keys instead of strings now
 # 18-Jun-2011: A Rexle document can now be added to another Rexle document 
 #                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
-
 module XMLhelper
 
   def doc_print(children)
 
-    body = children.empty? ? self.root.value : scan_print(children).join
+    body = children.empty? ? '' : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
-    #"<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body]
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), self.root.text + body, self.root.name]
   end
 
   def doc_pretty_print(children)
@@ -43,7 +43,7 @@ module XMLhelper
     body = children.empty? ? self.value : pretty_print(children,2).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     ind = "\n  "   
-    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]
+    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, self.root.text + body, "\n", self.root.name]
   end
 
   def scan_print(nodes)
@@ -213,6 +213,7 @@ class Rexle
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
 
+      #puts 'raw_xpath_value: ' + raw_xpath_value.inspect
       #remove any pre'fixes
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
       flag_func = false            

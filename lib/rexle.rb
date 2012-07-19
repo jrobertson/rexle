@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 19-Jul-2012: Changed children to elements where appropriate
 # 15-Jul-2012: bug fix: self.root.value is no longer appended
 #                 to the body if there are no child elements
 # 19-Jun-2012: a bug fix for .//*[@class]
@@ -427,7 +428,7 @@ class Rexle
 
     def doc_root() @rexle.root end
     def each(&blk) @child_elements.each(&blk) end
-    def has_elements?() !self.children.empty? end
+    def has_elements?() !self.elements.empty? end
     def root() self end #@rexle.root end
 
     def text(s='')
@@ -548,7 +549,7 @@ class Rexle
       
 
       r << node.xpath(xpath2)
-      r << node.children.map {|n| scan_match(n, path) if n.is_a? Rexle::Element}
+      r << node.elements.map {|n| scan_match(n, path) if n.is_a? Rexle::Element}
       r
     end
     
@@ -645,7 +646,7 @@ class Rexle
   def to_a() @a end
   def to_s(options={}) self.xml options end
   def text(xpath) @doc.text(xpath) end
-  def root() @doc.children.first end
+  def root() @doc.elements.first end
 
   def write(f) 
     f.write xml 
