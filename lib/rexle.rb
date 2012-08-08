@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 08-Aug-2012: feature: added Element#insert_before and Element#insert_after
 # 19-Jul-2012: Changed children to elements where appropriate
 # 15-Jul-2012: bug fix: self.root.value is no longer appended
 #                 to the body if there are no child elements
@@ -147,7 +148,7 @@ class Rexle
     include XMLhelper
     
     attr_accessor :name, :value, :parent
-    attr_reader :child_lookup
+    attr_reader :child_lookup, :child_elements
     
     alias original_clone clone
 
@@ -429,6 +430,10 @@ class Rexle
     def doc_root() @rexle.root end
     def each(&blk) @child_elements.each(&blk) end
     def has_elements?() !self.elements.empty? end
+    
+    def insert_after(node)   insert(node, 1)   end          
+    def insert_before(node)  insert(node)      end
+        
     def root() self end #@rexle.root end
 
     def text(s='')
@@ -475,6 +480,14 @@ class Rexle
     alias to_s xml
 
     private
+    
+    def insert(node,offset=0)
+      i = parent.child_elements.index(self)
+      return unless i
+      parent.child_elements.insert(i+offset,node)
+      parent.child_lookup.insert(i+offset, [node.name, node.attributes, node.value])          
+      self
+    end      
 
     def format_condition(condition)
 
@@ -557,6 +570,8 @@ class Rexle
 
       x = raw_element
       e = @child_elements[x.last]
+
+      return unless e.is_a? Rexle::Element
       name, value = e.name, e.value if e.is_a? Rexle::Element
 
       h = x[0][1]  # <-- fetch the attributes      
