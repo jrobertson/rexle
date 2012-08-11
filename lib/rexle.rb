@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 11-Aug-2012: bug fix: separated the max() method from 1 line into 3 
+#                and that fixed it
 # 08-Aug-2012: feature: added Element#insert_before and Element#insert_after
 # 19-Jul-2012: Changed children to elements where appropriate
 # 15-Jul-2012: bug fix: self.root.value is no longer appended
@@ -166,7 +168,10 @@ class Rexle
       length
     end
     
-    def max(path) query_xpath(path).flatten.compact.map(&:to_i).max end
+    def max(path) 
+      a = query_xpath(path).flatten.compact.map(&:to_i)
+      a.max 
+    end
       
     def name()
 
