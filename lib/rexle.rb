@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 15-Aug-2012: feature: xpath containing child:: now supported
 # 13-Aug-2012: bug fix: xpath can now handle the name() function
 # 11-Aug-2012: bug fix: separated the max() method from 1 line into 3 
 #                and that fixed it
@@ -225,7 +226,7 @@ class Rexle
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
       flag_func = false            
 
-      xpath_value = raw_xpath_value #.sub(/^\[/,'*[')
+      xpath_value = raw_xpath_value.sub('child::','./')
       #xpath_value.sub!(/\.\/(?=[\/])/,'')
 
       if xpath_value[/^[\w\/]+\s*=.*/] then        

@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 13-Aug-2012: bug fix: xpath can now handle the name() function
 # 11-Aug-2012: bug fix: separated the max() method from 1 line into 3 
 #                and that fixed it
 # 08-Aug-2012: feature: added Element#insert_before and Element#insert_after
@@ -174,7 +175,6 @@ class Rexle
     end
       
     def name()
-
       if @rexle then
         prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } if @rexle.prefixes.is_a? Array
         prefix ? @name.sub(prefix + ':', '') : @name
@@ -191,7 +191,7 @@ class Rexle
     def filter_xpath(path, rlist=[], &blk)
 
       # is it a function
-      fn_match = path.match(/^(\w+)\(([^\)]+)\)$/)
+      fn_match = path.match(/^(\w+)\(([^\)]*)\)$/)
 
       #    Array: proc {|x| x.flatten.compact}, 
       if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
@@ -213,7 +213,7 @@ class Rexle
         
       else
         m, xpath_value = fn_match.captures
-        method(m.to_sym).call(xpath_value)
+        xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
       end
 
     end    
