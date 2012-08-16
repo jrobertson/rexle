@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 16-Aug-2012: the current element's text (if its not empty) is now returned 
+#                from its children method
 # 15-Aug-2012: feature: xpath containing child:: now supported
 # 13-Aug-2012: bug fix: xpath can now handle the name() function
 # 11-Aug-2012: bug fix: separated the max() method from 1 line into 3 
@@ -405,7 +407,11 @@ class Rexle
     end  
     
     def attributes() @attributes end    
-    def children() @child_elements end    
+      
+    def children()      
+      (@value.empty? ? [] : [@value])  + @child_elements
+    end 
+    
     def children=(a) @child_elements = a end            
     def deep_clone() Rexle.new(self.xml).root end
     def clone() Element.new(@name, @value, @attributes) end
@@ -713,7 +719,7 @@ class Rexle
   def scan_element(name, value=nil, attributes=nil, *children)
 
     element = Element.new(name, value, attributes, self)  
-
+    puts 'children : '  + children.inspect
     if children then
       children.each do |x|
         if x.is_a? Array then
