@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 17-Aug-2012: bug fix: pretty print now ignores text containing empty space
 # 16-Aug-2012: the current element's text (if its not empty) is now returned 
 #                from its children method
 # 15-Aug-2012: feature: xpath containing child:: now supported
@@ -43,15 +44,15 @@ module XMLhelper
 
     body = children.empty? ? '' : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), self.root.text + body, self.root.name]
+    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
   end
 
   def doc_pretty_print(children)
 
-    body = children.empty? ? self.value : pretty_print(children,2).join
+    body = pretty_print(children,2).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     ind = "\n  "   
-    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, self.root.text + body, "\n", self.root.name]
+    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]
   end
 
   def scan_print(nodes)
@@ -65,7 +66,7 @@ module XMLhelper
 
           if x.value.length > 0 or x.children.length > 0 then
             out = ["<%s>" % tag]
-            out << x.value unless x.value.nil? || x.value.empty?
+            #out << x.value unless x.value.nil? || x.value.empty?
             out << scan_print(x.children)
             out << "</%s>" % x.name
           else
@@ -85,20 +86,21 @@ module XMLhelper
 
   def pretty_print(nodes, indent='0')
     indent = indent.to_i
-    nodes.map.with_index do |x, i|
+    nodes.select(){|x| x.is_a? Rexle::Element or x.strip.length > 0}
+        .map.with_index do |x, i|
       if x.is_a? Rexle::Element then
         unless x.name == '![' then
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
           a ||= [] 
           tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
-          ind1 = x.children.length > 0 ? ("\n" + '  ' * indent) : ''
-          start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+          start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
+          ind1 = x.children.grep(Rexle::Element).length > 0 ? 
+            ("\n" + '  ' * indent) : ''
           out = ["%s<%s>%s" % [start, tag, ind1]]
 
-          out << x.value.sub(/^[\n\s]+$/,'') unless x.value.nil? || x.value.empty?
           out << pretty_print(x.children, (indent + 1).to_s.clone)
-          ind2 = x.children.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+          ind2 = ind1.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
           out << "%s</%s>" % [ind2, x.name]
         else    
           "<![CDATA[%s]]>" % x.value
@@ -719,7 +721,7 @@ class Rexle
   def scan_element(name, value=nil, attributes=nil, *children)
 
     element = Element.new(name, value, attributes, self)  
-    puts 'children : '  + children.inspect
+
     if children then
       children.each do |x|
         if x.is_a? Array then
