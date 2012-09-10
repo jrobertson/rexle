@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 23-Aug-2012: feature: implemented xpath function contains()
 # 17-Aug-2012: bug fix: pretty print now ignores text containing empty space
 # 16-Aug-2012: the current element's text (if its not empty) is now returned 
 #                from its children method
@@ -169,6 +170,19 @@ class Rexle
       @child_lookup = []
     end
 
+    def contains(raw_args)
+      path, raw_val = raw_args.split(',',2)
+      val = raw_val.strip[/^["']?.*["']?$/]
+      
+      puts 'path : ' + path.inspect
+      
+      anode = query_xpath(path)
+      return unless anode
+      a = scan_contents(anode.first)
+     
+      [a.grep(/#{val}/).length > 0]
+    end    
+    
     def count(path)
       length = query_xpath(path).flatten.compact.length
       length
@@ -196,7 +210,7 @@ class Rexle
     def filter_xpath(path, rlist=[], &blk)
 
       # is it a function
-      fn_match = path.match(/^(\w+)\(([^\)]*)\)$/)
+      fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)$/)
 
       #    Array: proc {|x| x.flatten.compact}, 
       if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
@@ -217,7 +231,7 @@ class Rexle
         procs[results.class.to_s.to_sym].call(results) if results
         
       else
-        m, xpath_value = fn_match.captures
+        m, xpath_value = fn_match.captures        
         xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
       end
 
@@ -579,6 +593,20 @@ class Rexle
       r << node.elements.map {|n| scan_match(n, path) if n.is_a? Rexle::Element}
       r
     end
+
+    # used by xpath function contains()
+    #
+    def scan_contents(node)
+
+      a = []
+      a << node.text
+
+      node.elements.each do |child|
+        a.concat scan_contents(child)
+      end
+      a
+    end
+    
     
     def filter(raw_element, i, attr_search, &blk)
 
