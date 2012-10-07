@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 10-Sep-2012: bug fix: Removed code from method pretty_print in order to
+#                 get the XML displayed properly
 # 23-Aug-2012: feature: implemented xpath function contains()
 # 17-Aug-2012: bug fix: pretty print now ignores text containing empty space
 # 16-Aug-2012: the current element's text (if its not empty) is now returned 
@@ -31,19 +33,12 @@ include REXML
 # 14-Jan-2012: Implemented Rexle::Elements#each
 # 21-Dec-2011: Bug fix: xpath modified to allow querying from the actual 
 # root rather than the 1st child element from the root
-# 04-Sep-2011: Bug fix: xpath will now only return Rexle:elements  when
-#                * is used.
-# 03-Sep-2011: Implemented deep_clone as well as modifying clone to function 
-#                similar to REXML.
-# 28-Au-2011: New line characters between elements are now preserved
-# 24-Jul-2011: Smybols are used for attribute keys instead of strings now
-# 18-Jun-2011: A Rexle document can now be added to another Rexle document 
-#                e.g. Rexle.new('<root/>').add Rexle.new "<a>123</a>"
+
 module XMLhelper
 
   def doc_print(children)
 
-    body = children.empty? ? '' : scan_print(children).join
+    body = (children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
   end
@@ -65,7 +60,7 @@ module XMLhelper
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
           tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
-          if x.value.length > 0 or x.children.length > 0 then
+          if x.value.length > 0 or (x.children.length > 0 and not x.children.is_an_empty_string?) then
             out = ["<%s>" % tag]
             #out << x.value unless x.value.nil? || x.value.empty?
             out << scan_print(x.children)
@@ -87,10 +82,13 @@ module XMLhelper
 
   def pretty_print(nodes, indent='0')
     indent = indent.to_i
+
     nodes.select(){|x| x.is_a? Rexle::Element or x.strip.length > 0}
         .map.with_index do |x, i|
+
       if x.is_a? Rexle::Element then
         unless x.name == '![' then
+          #return ["<%s/>" % x.name] if x.value = ''
           a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
           a ||= [] 
           tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
@@ -172,9 +170,7 @@ class Rexle
 
     def contains(raw_args)
       path, raw_val = raw_args.split(',',2)
-      val = raw_val.strip[/^["']?.*["']?$/]
-      
-      puts 'path : ' + path.inspect
+      val = raw_val.strip[/^["']?.*["']?$/]      
       
       anode = query_xpath(path)
       return unless anode
@@ -424,11 +420,18 @@ class Rexle
     
     def attributes() @attributes end    
       
-    def children()      
-      (@value.empty? ? [] : [@value])  + @child_elements
+    def children()
+      
+      r = (@value.empty? ? [] : [@value])  + @child_elements
+      def r.is_an_empty_string?()
+        self.length == 1 and self.first == ''
+      end      
+      
+      return r
     end 
     
-    def children=(a) @child_elements = a end            
+    def children=(a)   @child_elements = a   end
+    
     def deep_clone() Rexle.new(self.xml).root end
     def clone() Element.new(@name, @value, @attributes) end
           
