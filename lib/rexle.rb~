@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 20-Oct-2012: feature: added Rexle::Element#texts which is the equivalent
+#                 of REXML::Element#texts
 # 10-Sep-2012: bug fix: Removed code from method pretty_print in order to
 #                 get the XML displayed properly
 # 23-Aug-2012: feature: implemented xpath function contains()
@@ -37,8 +39,8 @@ include REXML
 module XMLhelper
 
   def doc_print(children)
-
-    body = (children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
+    
+    body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
   end
@@ -118,6 +120,10 @@ class Rexle
 
   attr_reader :prefixes
 
+  def self.version()
+    '0.9.xx'
+  end
+  
   def initialize(x=nil)
     super()
 
@@ -213,6 +219,7 @@ class Rexle
         procs = {
           Array: proc {|x| block_given? ? x : x.flatten.uniq }, 
           String: proc {|x| x},
+          Hash: proc {|x| x},
           TrueClass: proc{|x| x},
           FalseClass: proc{|x| x},
           :"Rexle::Element" => proc {|x| [x]}
@@ -235,7 +242,6 @@ class Rexle
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
 
-      #puts 'raw_xpath_value: ' + raw_xpath_value.inspect
       #remove any pre'fixes
      #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
       flag_func = false            
@@ -277,6 +283,7 @@ class Rexle
 
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
 
+        return @attributes  if attribute == '*'
         return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
         s = a_path.shift
       end      
@@ -341,7 +348,9 @@ class Rexle
             rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/') + raw_condition.to_s + remaining_path, &blk); (r || e) }
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
 
-            if rtn_element.is_a? Array then
+            if rtn_element.is_a? Hash then
+              rtn_element
+            elsif rtn_element.is_a? Array then
               rtn_element
             elsif (rtn_element.is_a? String) || (rtn_element.is_a?(Array) and not(rtn_element[0].is_a? String))
               rtn_element
@@ -421,7 +430,7 @@ class Rexle
     def attributes() @attributes end    
       
     def children()
-      
+      return unless @value
       r = (@value.empty? ? [] : [@value])  + @child_elements
       def r.is_an_empty_string?()
         self.length == 1 and self.first == ''
@@ -459,7 +468,9 @@ class Rexle
     end
 
     def doc_root() @rexle.root end
-    def each(&blk) @child_elements.each(&blk) end
+    def each(&blk) 
+      @child_elements.each(&blk) #unless @child_elements.empty?
+    end
     def has_elements?() !self.elements.empty? end
     
     def insert_after(node)   insert(node, 1)   end          
@@ -484,6 +495,10 @@ class Rexle
       end
 
       result
+    end
+    
+    def texts()
+      [@value] + @child_elements.select {|x| x.is_a? String}
     end
 
     def value=(raw_s)
@@ -715,9 +730,11 @@ class Rexle
   def xml(options={})
     o = {pretty: false, declaration: true}.merge(options)
     msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
+
     r = ''
     r = "<?xml version='1.0' encoding='UTF-8'?>\n" if o[:declaration] == true
     r << method(msg).call(self.root.children)
+
     r
   end
 
