@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '0.9.47'
-  s.summary = 'rexle'
+  s.version = '0.9.5'
+  s.summary = 'Rexle is a simple XML parser written purely in Ruby'
   s.files = Dir['lib/**/*.rb']
   s.authors = ['James Robertson']
   s.add_dependency('rexleparser')
