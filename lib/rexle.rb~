@@ -12,6 +12,8 @@ include REXML
 # modifications:
 # 20-Oct-2012: feature: added Rexle::Element#texts which is the equivalent
 #                 of REXML::Element#texts
+#              feature: Rexle::Element#add_text is now the equivalent of 
+#                 REXML::Element#add_text                  
 # 10-Sep-2012: bug fix: Removed code from method pretty_print in order to
 #                 get the XML displayed properly
 # 23-Aug-2012: feature: implemented xpath function contains()
@@ -420,7 +422,16 @@ class Rexle
       @attributes.merge! h
     end
 
-    def add_text(s) @value = s; self end
+    def add_text(s)
+      if @child_elements.length < 1 then
+        @value = s; 
+      else
+        if @child_elements.last.is_a? Rexle::Element then
+          self.add s
+        end
+      end
+      self 
+    end
     
     def attribute(key) 
       key = key.to_sym if key.is_a? String
