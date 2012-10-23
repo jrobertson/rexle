@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 21-Oct-2012: xpath predicate now implemented e.g. fun/@id='4' => true
 # 20-Oct-2012: feature: added Rexle::Element#texts which is the equivalent
 #                 of REXML::Element#texts
 #              feature: Rexle::Element#add_text is now the equivalent of 
@@ -193,7 +194,7 @@ class Rexle
     end
     
     def max(path) 
-      a = query_xpath(path).flatten.compact.map(&:to_i)
+      a = query_xpath(path).flatten.select{|x| x.is_a? String}.map(&:to_i)
       a.max 
     end
       
@@ -228,11 +229,11 @@ class Rexle
         }
         bucket = []
         raw_results = path.split('|').map do |xp|
-          query_xpath(xp, bucket, &blk)
+          query_xpath(xp, bucket, &blk)         
         end
-
-        #results = raw_results.inject(&:+)
-        results = raw_results.last
+        
+        results = raw_results.last        
+        results = [true] if results.is_a? Array and results.flatten.any?{|x| x == true}
         procs[results.class.to_s.to_sym].call(results) if results
         
       else
@@ -284,7 +285,7 @@ class Rexle
       else
 
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
-
+  
         return @attributes  if attribute == '*'
         return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
         s = a_path.shift
@@ -299,22 +300,30 @@ class Rexle
         unless element_part[/^@/] then
           element_name = element_part[/^[\w:\*\.]+/]
         else
+          if xpath_value[/^\[/] then
+            condition = xpath_value
+            element_name = nil
+          else
+            condition = element_part
+            attr_search = format_condition('[' + condition + ']')
+            return [attribute_search(attr_search, self, self.attributes) == nil]            
+          end
 
-          condition = xpath_value[/^\[/] ? xpath_value : element_part
-          element_name = nil
         end
 
       end
 
       #element_name ||= '*'
       raw_condition = '' if condition
+
       attr_search = format_condition(condition) if condition and condition.length > 0      
-      
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
+
       if attr_search2 then        
         r4 = attribute_search(attr_search, self, self.attributes)
         return r4
-      end      
+      end
+      
       
       return_elements = []
 
@@ -426,9 +435,7 @@ class Rexle
       if @child_elements.length < 1 then
         @value = s; 
       else
-        if @child_elements.last.is_a? Rexle::Element then
-          self.add s
-        end
+        self.add s
       end
       self 
     end
