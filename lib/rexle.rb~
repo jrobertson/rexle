@@ -306,7 +306,7 @@ class Rexle
           else
             condition = element_part
             attr_search = format_condition('[' + condition + ']')
-            return [attribute_search(attr_search, self, self.attributes) == nil]            
+            return [attribute_search(attr_search, self, self.attributes) != nil]            
           end
 
         end
