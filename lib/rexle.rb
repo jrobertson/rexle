@@ -767,7 +767,12 @@ class Rexle
   def elements(s=nil) @doc.elements(s) end
   def name() @doc.root.name end
   def to_a() @a end
-  def to_s(options={}) self.xml options end
+    
+  def to_s(options={}) 
+    return '<UNDEFINED/>' unless @doc
+    self.xml options 
+  end
+  
   def text(xpath) @doc.text(xpath) end
   def root() @doc.elements.first end
 
@@ -776,6 +781,8 @@ class Rexle
   end
 
   def xml(options={})
+
+    return '' unless @doc
     o = {pretty: false, declaration: true}.merge(options)
     msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
 
