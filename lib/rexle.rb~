@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 06-Nov-2012: additional xpath predicate now implemented e.g.
+#                            fun/. > 200 => [false, false, true, true]
 # 21-Oct-2012: xpath predicate now implemented e.g. fun/@id='4' => true
 # 20-Oct-2012: feature: added Rexle::Element#texts which is the equivalent
 #                 of REXML::Element#texts
@@ -88,7 +90,7 @@ module XMLhelper
   def pretty_print(nodes, indent='0')
     indent = indent.to_i
 
-    nodes.select(){|x| x.is_a? Rexle::Element or x.strip.length > 0}
+    nodes.select(){|x| x.is_a? Rexle::Element or (x.is_a? String and x.strip.length > 0)}
         .map.with_index do |x, i|
 
       if x.is_a? Rexle::Element then
@@ -220,7 +222,15 @@ class Rexle
       #    Array: proc {|x| x.flatten.compact}, 
       if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
         procs = {
-          Array: proc {|x| block_given? ? x : x.flatten.uniq }, 
+          #jr061012 Array: proc {|x| block_given? ? x : x.flatten.uniq },
+          Array: proc { |x| 
+            if block_given? then 
+              x.flatten(1) 
+            else
+              rs = x.flatten
+              rs.any?{|x| x == true or x == false} ? rs : rs.uniq(&:object_id) 
+            end
+          }, 
           String: proc {|x| x},
           Hash: proc {|x| x},
           TrueClass: proc{|x| x},
@@ -231,9 +241,9 @@ class Rexle
         raw_results = path.split('|').map do |xp|
           query_xpath(xp, bucket, &blk)         
         end
-        
-        results = raw_results.last        
-        results = [true] if results.is_a? Array and results.flatten.any?{|x| x == true}
+
+        results = raw_results
+
         procs[results.class.to_s.to_sym].call(results) if results
         
       else
@@ -295,10 +305,12 @@ class Rexle
 
       elmnt_path = s[/^([\w:\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
-      
+
       if element_part then
-        unless element_part[/^@/] then
+
+        unless element_part[/^(@|[@\.\w]+[\s=])/] then
           element_name = element_part[/^[\w:\*\.]+/]
+
         else
           if xpath_value[/^\[/] then
             condition = xpath_value
@@ -565,7 +577,6 @@ class Rexle
       else
 
         andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten
-
         indices = [0] + andor_items + [raw_items.length]
 
         if raw_items[0][0] == '@' then
@@ -587,6 +598,7 @@ class Rexle
         else
 
           cons_items = indices.each_cons(2).map{|x,y| raw_items.slice(x...y)}
+          
           items = cons_items.map do |x| 
 
             if x.length >= 3 then
@@ -664,6 +676,7 @@ class Rexle
     end
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
+
       if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
@@ -674,8 +687,15 @@ class Rexle
         block_given? ? blk.call(e) : e
       elsif attr_search[/^\(name ==/] and eval(attr_search) 
         block_given? ? blk.call(e) : e          
-      elsif attr_search[/^e\.value/] and eval(attr_search)           
-        block_given? ? blk.call(e) : e
+      elsif attr_search[/^e\.value/]
+
+        v = attr_search[/[^\s]+$/]
+        duck_type = %w(to_f to_i to_s).detect {|x| v == v.send(x).to_s}
+        attr_search.sub!(/^e.value/,'e.value.' + duck_type)
+
+        if eval(attr_search) then
+          block_given? ? blk.call(e) : e
+        end
       elsif attr_search[/^e\.xpath/] and eval(attr_search)           
         block_given? ? blk.call(e) : e
       end      

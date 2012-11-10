@@ -10,8 +10,9 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 10-Nov-2012: Elements can now be added starting from an empty document
 # 06-Nov-2012: additional xpath predicate now implemented e.g.
-#                            fun/. > 200 => [false, false, true, true]
+#               fun/. > 200 => [false, false, true, true]
 # 21-Oct-2012: xpath predicate now implemented e.g. fun/@id='4' => true
 # 20-Oct-2012: feature: added Rexle::Element#texts which is the equivalent
 #                 of REXML::Element#texts
@@ -124,12 +125,9 @@ class Rexle
   include XMLhelper
 
   attr_reader :prefixes
-
-  def self.version()
-    '0.9.xx'
-  end
   
   def initialize(x=nil)
+    
     super()
 
     # what type of input is it? Is it a string, array, or REXML doc?
@@ -153,7 +151,7 @@ class Rexle
         xmlns = @doc.root.attributes.select {|k,v| k[/^xmlns:/]}
         @prefixes = xmlns.keys.map{|x| x[/\w+$/]}
       end
-
+      
     end
 
   end
@@ -407,6 +405,7 @@ class Rexle
 
     def add_element(item)
       if item.is_a? Rexle::Element then
+
         @child_lookup << [item.name, item.attributes, item.value]
         @child_elements << item
         # add a reference from this element (the parent) to the child
@@ -743,7 +742,18 @@ class Rexle
   def add_attribute(x) @doc.attribute(x) end
   def attribute(key) @doc.attribute(key) end
   def attributes() @doc.attributes end
-  def add_element(element) @doc.root.add_element(element) end
+    
+  def add_element(element)  
+    if @doc then     
+      raise 'attempted adding second root element to document' if @doc.root
+      @doc.root.add_element(element) 
+    else
+      doc_node = ['doc','',{},[element.name, element.value,element.attributes]]  
+      @doc = scan_element(*doc_node)      
+    end
+    element
+  end
+  
   def add_text(s) end
 
   alias add add_element
