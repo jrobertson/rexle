@@ -87,6 +87,25 @@ module XMLhelper
     end
 
   end
+  
+  def scan_to_a(nodes)
+
+    nodes.inject([]) do |r,x|
+
+      if x.is_a? Rexle::Element then
+
+        a = [x.name, x.value, x.attributes]
+        (a.concat(scan_to_a(x.children[1..-1]))) if x.children.length > 1
+        r << a
+      elsif x.is_a? String then
+
+        r << x
+      end
+
+    end
+
+  end
+  
 
   def pretty_print(nodes, indent='0')
     indent = indent.to_i
@@ -545,6 +564,10 @@ class Rexle
     end
 
     alias text= value=
+        
+    def to_a()
+      [self.name, self.value, self.attributes, *scan_to_a(self.children)]
+    end
 
     def xml(options={})
       o = {pretty: false}.merge(options)
@@ -748,7 +771,7 @@ class Rexle
       raise 'attempted adding second root element to document' if @doc.root
       @doc.root.add_element(element) 
     else
-      doc_node = ['doc','',{},[element.name, element.value,element.attributes]]  
+      doc_node = ['doc', '', {}, element.to_a]  
       @doc = scan_element(*doc_node)      
     end
     element
