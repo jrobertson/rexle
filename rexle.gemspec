@@ -10,6 +10,5 @@ Gem::Specification.new do |s|
   s.add_dependency('rexleparser')
   s.add_dependency('dynarex-parser')
   s.add_dependency('polyrex-parser')
-  s.add_dependency('rexle-builder')   s.signing_key = '../privatekeys/rexle.pem'
-  s.cert_chain  = ['gem-public_cert.pem']
+  s.add_dependency('rexle-builder') 
 end
