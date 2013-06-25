@@ -64,22 +64,24 @@ module XMLhelper
     nodes.map do |x|
 
       if x.is_a? Rexle::Element then
-        if x.name.chr != '!' then
-          a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
-          tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
-
-          if x.value.length > 0 or (x.children.length > 0 and not x.children.is_an_empty_string?) then
-            out = ["<%s>" % tag]
-            #out << x.value unless x.value.nil? || x.value.empty?
-            out << scan_print(x.children)
-            out << "</%s>" % x.name
+        case x.name
+          when '!-'
+            "<!--%s-->" % x.value  
+          when '!['    
+            "<![CDATA[%s]]>" % x.value
           else
-            out = ["<%s/>" % tag]
-          end
-        elsif x.name == '!-' then
-          "<!--%s-->" % x.value
-        else
-          "<![CDATA[%s]]>" % x.value      
+
+            a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+            tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+
+            if x.value.length > 0 or (x.children.length > 0 and not x.children.is_an_empty_string?) then
+              out = ["<%s>" % tag]
+              #out << x.value unless x.value.nil? || x.value.empty?
+              out << scan_print(x.children)
+              out << "</%s>" % x.name
+            else
+              out = ["<%s/>" % tag]
+            end
         end      
       elsif x.is_a? String then
         x
@@ -114,23 +116,26 @@ module XMLhelper
         .map.with_index do |x, i|
 
       if x.is_a? Rexle::Element then
-        unless x.name == '![' then
-          #return ["<%s/>" % x.name] if x.value = ''
-          a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
-          a ||= [] 
-          tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+        case x.name
+          when '!-'
+            "<!--%s-->" % x.value  
+          when '!['    
+            "<![CDATA[%s]]>" % x.value
+          else
+            #return ["<%s/>" % x.name] if x.value = ''
+            a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+            a ||= [] 
+            tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
-          start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
-          ind1 = x.children.grep(Rexle::Element).length > 0 ? 
-            ("\n" + '  ' * indent) : ''
-          out = ["%s<%s>%s" % [start, tag, ind1]]
+            start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
+            ind1 = x.children.grep(Rexle::Element).length > 0 ? 
+              ("\n" + '  ' * indent) : ''
+            out = ["%s<%s>%s" % [start, tag, ind1]]
 
-          out << pretty_print(x.children, (indent + 1).to_s.clone)
-          ind2 = ind1.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
-          out << "%s</%s>" % [ind2, x.name]
-        else    
-          "<![CDATA[%s]]>" % x.value
-        end
+            out << pretty_print(x.children, (indent + 1).to_s.clone)
+            ind2 = ind1.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+            out << "%s</%s>" % [ind2, x.name]            
+          end
       elsif x.is_a? String then
         x.sub(/^[\n\s]+$/,'')
       end
