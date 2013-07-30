@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 25-jun-2013: bug fix: doc.root.delete(xpath) fixed
 # 10-Nov-2012: Elements can now be added starting from an empty document
 # 06-Nov-2012: additional xpath predicate now implemented e.g.
 #               fun/. > 200 => [false, false, true, true]
@@ -353,7 +354,7 @@ class Rexle
       attr_search = format_condition(condition) if condition and condition.length > 0      
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
 
-      if attr_search2 then        
+      if attr_search2 then
         r4 = attribute_search(attr_search, self, self.attributes)
         return r4
       end
@@ -384,8 +385,10 @@ class Rexle
       if return_elements.length > 0 then
 
         if (a_path + [remaining_path]).join.empty? then
+
           rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}.compact
           rlist = rlist[0] if rlist.length == 1
+
         else
 
           rlist << return_elements.map.with_index do |x,i| 
@@ -499,8 +502,13 @@ class Rexle
           
     def delete(obj=nil)
       if obj then
-        i = @child_elements.index(obj)
-        [@child_elements, @child_lookup].each{|x| x.delete_at i} if i
+        if obj.is_a? String then
+          e = self.element obj
+          e.delete if e
+        else
+          i = @child_elements.index(obj)
+          [@child_elements, @child_lookup].each{|x| x.delete_at i} if i
+        end
       else
         self.parent.delete self
       end

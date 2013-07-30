@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 30-jul-2013: feature: Rexle::Element#xml now accepts an xpath
 # 25-jun-2013: bug fix: doc.root.delete(xpath) fixed
 # 10-Nov-2012: Elements can now be added starting from an empty document
 # 06-Nov-2012: additional xpath predicate now implemented e.g.
@@ -179,7 +180,7 @@ class Rexle
       
     end
 
-  end
+  end  
   
   def xpath(path,  &blk)
     @doc.xpath(path,  &blk)
@@ -583,9 +584,18 @@ class Rexle
     end
 
     def xml(options={})
-      o = {pretty: false}.merge(options)
-      msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
-      method(msg).call(self.children)
+      h = {
+        Hash: lambda {|x|
+          o = {pretty: false}.merge(x)
+          msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
+          method(msg).call(self.children)
+        },
+        String: lambda {|x| 
+          r = self.element(x)
+          r ? r.xml : ''
+        }
+      }
+      h[options.class.to_s.to_sym].call options
     end
 
     alias to_s xml
