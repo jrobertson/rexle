@@ -10,6 +10,7 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 22-sep-2013: feature: remove() is now an alias of delete()
 # 30-jul-2013: feature: Rexle::Element#xml now accepts an xpath
 # 25-jun-2013: bug fix: doc.root.delete(xpath) fixed
 # 10-Nov-2012: Elements can now be added starting from an empty document
@@ -515,6 +516,8 @@ class Rexle
       end
     end
 
+    alias remove delete
+
     def element(s) 
       r = self.xpath(s)
       r.is_a?(Array) ? r.first : r
@@ -809,6 +812,8 @@ class Rexle
     e.delete if e
   end
   
+  alias remove delete
+
   def element(xpath) self.xpath(xpath).first end  
   def elements(s=nil) @doc.elements(s) end
   def name() @doc.root.name end
