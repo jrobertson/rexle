@@ -10,6 +10,8 @@ require 'cgi'
 include REXML
 
 # modifications:
+# 10-Oct-2013: bug fix: child elements which have the same name as their parent 
+#                are now select correctly through XPath
 # 22-sep-2013: feature: remove() is now an alias of delete()
 # 30-jul-2013: feature: Rexle::Element#xml now accepts an xpath
 # 25-jun-2013: bug fix: doc.root.delete(xpath) fixed
@@ -373,8 +375,8 @@ class Rexle
         rs = scan_match(self, xpath_value).flatten.compact
         return n ? rs[n.to_i-1] : rs
 
-      elsif (raw_path == '.' or raw_path == self.name) and attr_search.nil? then
-        return  [self]
+      #jr101013 elsif (raw_path == '.' or raw_path == self.name) and attr_search.nil? then
+      #jr101013  return  [self]
       else
 
         return_elements = @child_lookup.map.with_index.select do |x|    
