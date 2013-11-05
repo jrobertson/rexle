@@ -11,9 +11,8 @@ include REXML
 
 # modifications:
 
-# 05-Nov-2013: Insert_before bug fix: The original position of the node is
-#                deleted if the current node is inserted elsewhere 
-#                within the doc                 
+# 05-Nov-2013: If a node is added to the document which already exists in the
+#                 node, it will be moved accordingly.
 # 05-Nov02013: XPath bug fix: recursive selector with conditional parent now 
 #                returns the correct child e.g. //b[2]/c
 # 10-Oct-2013: bug fix: child elements which have the same name as their parent 
@@ -199,11 +198,12 @@ class Rexle
     include XMLhelper
     
     attr_accessor :name, :value, :parent
-    attr_reader :child_lookup, :child_elements
+    attr_reader :child_lookup, :child_elements, :doc_id
     
     alias original_clone clone
 
     def initialize(name=nil, value='', attributes={}, rexle=nil)
+
       @rexle = rexle      
       super()
       @name, @value, @attributes = name.to_s, value, attributes
@@ -441,6 +441,7 @@ class Rexle
     end
 
     def add_element(item)
+      
       if item.is_a? Rexle::Element then
 
         @child_lookup << [item.name, item.attributes, item.value]
@@ -454,7 +455,27 @@ class Rexle
       elsif item.is_a? Rexle then
         self.add_element(item.root)
       end
-    end    
+    end 
+
+    def add(item)   
+
+      if item.is_a? Rexle::Element then
+
+        if self.doc_id == item.doc_id then
+
+          new_item = item.deep_clone
+          add_element new_item
+          item.delete
+          item = new_item
+          new_item
+        else
+          add_element item
+        end
+      else
+        add_element item
+      end
+
+    end
 
     def inspect()
       if self.xml.length > 30 then
@@ -464,7 +485,7 @@ class Rexle
       end  
     end
     
-    alias add add_element
+    #alias add add_element
 
     def add_attribute(*x)
 
@@ -620,13 +641,13 @@ class Rexle
 
       i = parent.child_elements.index(self)
       return unless i
-      new_node = node.deep_clone
 
-      self.delete node
-      node = new_node
-      parent.child_elements.insert(i+offset,new_node)
+      parent.child_elements.insert(i+offset, node)
+      parent.child_lookup.insert(i+offset, [node.name, node.attributes, node.value])          
 
-      parent.child_lookup.insert(i+offset, [new_node.name, new_node.attributes, new_node.value])          
+      @doc_id = self.doc_root.object_id
+      node.instance_variable_set(:@doc_id, self.doc_root.object_id)
+
       self
     end      
 
@@ -810,10 +831,12 @@ class Rexle
   def attributes() @doc.attributes end
     
   def add_element(element)  
+
     if @doc then     
       raise 'attempted adding second root element to document' if @doc.root
       @doc.root.add_element(element) 
     else
+
       doc_node = ['doc', '', {}, element.to_a]  
       @doc = scan_element(*doc_node)      
     end
