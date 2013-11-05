@@ -10,6 +10,12 @@ require 'cgi'
 include REXML
 
 # modifications:
+
+# 05-Nov-2013: Insert_before bug fix: The original position of the node is
+#                deleted if the current node is inserted elsewhere 
+#                within the doc                 
+# 05-Nov02013: XPath bug fix: recursive selector with conditional parent now 
+#                returns the correct child e.g. //b[2]/c
 # 10-Oct-2013: bug fix: child elements which have the same name as their parent 
 #                are now select correctly through XPath
 # 22-sep-2013: feature: remove() is now an alias of delete()
@@ -368,7 +374,7 @@ class Rexle
 
       if raw_path[0,2] == '//' then
 
-        regex = /\[(\d+)\]/
+        regex = /\[(\d+)\]$/
         n = xpath_value[regex,1]
         xpath_value.slice!(regex)
         
@@ -505,7 +511,9 @@ class Rexle
     def clone() Element.new(@name, @value, @attributes) end
           
     def delete(obj=nil)
+
       if obj then
+
         if obj.is_a? String then
           e = self.element obj
           e.delete if e
@@ -514,6 +522,7 @@ class Rexle
           [@child_elements, @child_lookup].each{|x| x.delete_at i} if i
         end
       else
+
         self.parent.delete self
       end
     end
@@ -608,10 +617,16 @@ class Rexle
     private
     
     def insert(node,offset=0)
+
       i = parent.child_elements.index(self)
       return unless i
-      parent.child_elements.insert(i+offset,node)
-      parent.child_lookup.insert(i+offset, [node.name, node.attributes, node.value])          
+      new_node = node.deep_clone
+
+      self.delete node
+      node = new_node
+      parent.child_elements.insert(i+offset,new_node)
+
+      parent.child_lookup.insert(i+offset, [new_node.name, new_node.attributes, new_node.value])          
       self
     end      
 
@@ -810,6 +825,7 @@ class Rexle
   alias add add_element
 
   def delete(xpath)
+
     e = @doc.element(xpath)
     e.delete if e
   end
