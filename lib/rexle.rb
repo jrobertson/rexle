@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 08-Nov-2013: An element will now only be deleted if it has a parent
 # 05-Nov-2013: If a node is added to the document which already exists in the
 #                 node, it will be moved accordingly.
 # 05-Nov02013: XPath bug fix: recursive selector with conditional parent now 
@@ -544,7 +545,7 @@ class Rexle
         end
       else
 
-        self.parent.delete self
+        self.parent.delete(self) if self.parent
       end
     end
 
