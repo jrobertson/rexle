@@ -11,6 +11,8 @@ include REXML
 
 # modifications:
 
+# 14-Nov-2013: feature: Implemented method content() to output XML as 
+#                unescaped plain text
 # 08-Nov-2013: An element will now only be deleted if it has a parent
 # 05-Nov-2013: If a node is added to the document which already exists in the
 #                 node, it will be moved accordingly.
@@ -634,6 +636,10 @@ class Rexle
       h[options.class.to_s.to_sym].call options
     end
 
+    def content(options={})
+      CGI.unescapeHTML(xml(options))
+    end
+
     alias to_s xml
 
     private
@@ -884,6 +890,10 @@ class Rexle
     r << method(msg).call(self.root.children)
 
     r
+  end
+
+  def content(options={})
+    CGI.unescapeHTML(xml(options))
   end
 
   private
