@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 13-Dec-2013: bug fix: elements with dashes can now be queried
 # 14-Nov-2013: feature: Implemented method content() to output XML as 
 #                unescaped plain text
 # 08-Nov-2013: An element will now only be deleted if it has a parent
@@ -339,13 +340,13 @@ class Rexle
 
       # isolate the xpath to return just the path to the current element
 
-      elmnt_path = s[/^([\w:\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
+      elmnt_path = s[/^([\w:\-\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
       if element_part then
 
         unless element_part[/^(@|[@\.\w]+[\s=])/] then
-          element_name = element_part[/^[\w:\*\.]+/]
+          element_name = element_part[/^[\w:\-\*\.]+/]
 
         else
           if xpath_value[/^\[/] then
@@ -430,7 +431,7 @@ class Rexle
       else
 
         # strip off the 1st element from the XPath
-        new_xpath = xpath_value[/^\/\/[\w:]+\/(.*)/,1]
+        new_xpath = xpath_value[/^\/\/[\w:\-]+\/(.*)/,1]
 
         if new_xpath then
           self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
