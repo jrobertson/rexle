@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 18-Dec-2013: feature fix: the result of text() is no longer unescaped
 # 13-Dec-2013: bug fix: elements with dashes can now be queried
 # 14-Nov-2013: feature: Implemented method content() to output XML as 
 #                unescaped plain text
@@ -587,7 +588,7 @@ class Rexle
         e = self.element(s)
         result = e.value if e
       end
-      result = CGI.unescape_html result.to_s
+      #jr181313 result = CGI.unescape_html result.to_s
  
       def result.unescape()
         s = self.clone
