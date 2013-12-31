@@ -11,6 +11,9 @@ include REXML
 
 # modifications:
 
+# modifications:
+
+# 31-Dec-2013: feature: now supports processing instructions
 # 18-Dec-2013: feature fix: the result of text() is no longer unescaped
 # 13-Dec-2013: bug fix: elements with dashes can now be queried
 # 14-Nov-2013: feature: Implemented method content() to output XML as 
@@ -63,7 +66,14 @@ module XMLhelper
     
     body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
-    "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), body, self.root.name]
+    xml = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : \
+      ' ' + a.join(' '), body, self.root.name]
+    
+    if self.instructions then
+      processing_instructions() + xml
+    else 
+      xml
+    end
   end
 
   def doc_pretty_print(children)
@@ -71,7 +81,18 @@ module XMLhelper
     body = pretty_print(children,2).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
     ind = "\n  "   
-    "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : ' ' + a.join(' '), ind, body, "\n", self.root.name]
+    xml = "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : \
+      ' ' + a.join(' '), ind, body, "\n", self.root.name]
+
+    if self.instructions then
+      processing_instructions("\n") + "\n" + xml
+    else 
+      xml
+    end
+  end
+
+  def processing_instructions(s='')
+    self.instructions.map { |instruction|  "<?%s %s?>" % instruction }.join s
   end
 
   def scan_print(nodes)
@@ -163,7 +184,7 @@ end
 class Rexle
   include XMLhelper
 
-  attr_reader :prefixes
+  attr_reader :prefixes, :instructions
   
   def initialize(x=nil)
     
@@ -203,7 +224,7 @@ class Rexle
     include XMLhelper
     
     attr_accessor :name, :value, :parent
-    attr_reader :child_lookup, :child_elements, :doc_id
+    attr_reader :child_lookup, :child_elements, :doc_id, :instructions
     
     alias original_clone clone
 
@@ -588,7 +609,7 @@ class Rexle
         e = self.element(s)
         result = e.value if e
       end
-      #jr181313 result = CGI.unescape_html result.to_s
+      #result = CGI.unescape_html result.to_s
  
       def result.unescape()
         s = self.clone
@@ -888,9 +909,10 @@ class Rexle
     msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
 
     r = ''
-    r = "<?xml version='1.0' encoding='UTF-8'?>\n" if o[:declaration] == true
-    r << method(msg).call(self.root.children)
+    r = "<?xml version='1.0' encoding='UTF-8'?>" if o[:declaration] == true
+    r << "\n" if o[:pretty] == true
 
+    r << method(msg).call(self.root.children).strip
     r
   end
 
@@ -917,11 +939,18 @@ class Rexle
         procs[recordx_type].call(x)
       else
 
-        RexleParser.new(x).to_a
+        rp = RexleParser.new(x)
+        a = rp.to_a
+        @instructions = rp.instructions
+        return a
       end
     else
 
-      RexleParser.new(x).to_a
+      rp = RexleParser.new(x)
+      a = rp.to_a
+      @instructions = rp.instructions
+      return a
+  
     end
 
   end
