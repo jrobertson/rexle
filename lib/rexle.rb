@@ -11,8 +11,6 @@ include REXML
 
 # modifications:
 
-# modifications:
-
 # 31-Dec-2013: feature: now supports processing instructions
 # 18-Dec-2013: feature fix: the result of text() is no longer unescaped
 # 13-Dec-2013: bug fix: elements with dashes can now be queried
@@ -184,7 +182,8 @@ end
 class Rexle
   include XMLhelper
 
-  attr_reader :prefixes, :instructions
+  attr_reader :prefixes
+  attr_accessor :instructions
   
   def initialize(x=nil)
     
