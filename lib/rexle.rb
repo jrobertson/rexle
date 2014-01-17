@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 17-Jan-2014: bug fix: Rexle::Element to_a now returns all child elements
 # 31-Dec-2013: feature: now supports processing instructions
 # 18-Dec-2013: feature fix: the result of text() is no longer unescaped
 # 13-Dec-2013: bug fix: elements with dashes can now be queried
@@ -131,7 +132,7 @@ module XMLhelper
       if x.is_a? Rexle::Element then
 
         a = [x.name, x.value, x.attributes]
-        (a.concat(scan_to_a(x.children[1..-1]))) if x.children.length > 1
+        (a.concat(scan_to_a(x.children))) if x.children.length > 1
         r << a
       elsif x.is_a? String then
 
