@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 12-Mar-2013: bug fix: Duplicate processing instruction bug fixed
 # 17-Jan-2014: bug fix: Rexle::Element to_a now returns all child elements
 # 31-Dec-2013: feature: now supports processing instructions
 # 18-Dec-2013: feature fix: the result of text() is no longer unescaped
@@ -61,7 +62,7 @@ include REXML
 
 module XMLhelper
 
-  def doc_print(children)
+  def doc_print(children, declaration=true)
     
     body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
@@ -75,7 +76,7 @@ module XMLhelper
     end
   end
 
-  def doc_pretty_print(children)
+  def doc_pretty_print(children, declaration=true)
 
     body = pretty_print(children,2).join
     a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
@@ -189,6 +190,8 @@ class Rexle
   def initialize(x=nil)
     
     super()
+
+    @instructions = [["xml", "version='1.0' encoding='UTF-8'"]] 
 
     # what type of input is it? Is it a string, array, or REXML doc?
     if x then
@@ -909,10 +912,16 @@ class Rexle
     msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
 
     r = ''
-    r = "<?xml version='1.0' encoding='UTF-8'?>" if o[:declaration] == true
+
+    if o[:declaration] == true then
+
+      unless @instructions.assoc 'xml' then
+        @instructions.unshift ["xml","version='1.0' encoding='UTF-8'"]
+      end
+    end
     r << "\n" if o[:pretty] == true
 
-    r << method(msg).call(self.root.children).strip
+    r << method(msg).call(self.root.children, o[:declaration]).strip
     r
   end
 
