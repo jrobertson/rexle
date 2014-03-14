@@ -11,7 +11,9 @@ include REXML
 
 # modifications:
 
-# 12-Mar-2013: bug fix: Duplicate processing instruction bug fixed
+# 14-Mar-2014: bug fix: An XML processing instruction will now only be 
+#                       display if declaration = true
+# 12-Mar-2014: bug fix: Duplicate processing instruction bug fixed
 # 17-Jan-2014: bug fix: Rexle::Element to_a now returns all child elements
 # 31-Dec-2013: feature: now supports processing instructions
 # 18-Dec-2013: feature fix: the result of text() is no longer unescaped
@@ -69,7 +71,7 @@ module XMLhelper
     xml = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : \
       ' ' + a.join(' '), body, self.root.name]
     
-    if self.instructions then
+    if self.instructions and declaration then
       processing_instructions() + xml
     else 
       xml
@@ -84,7 +86,7 @@ module XMLhelper
     xml = "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : \
       ' ' + a.join(' '), ind, body, "\n", self.root.name]
 
-    if self.instructions then
+    if self.instructions and declaration then
       processing_instructions("\n") + "\n" + xml
     else 
       xml
