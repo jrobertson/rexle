@@ -11,6 +11,8 @@ include REXML
 
 # modifications:
 
+# 24-Mar-2014: minor bug fix: A blank line is no longer inserted at the 
+#              top of the XML document
 # 14-Mar-2014: bug fix: An XML processing instruction will now only be 
 #                       display if declaration = true
 # 12-Mar-2014: bug fix: Duplicate processing instruction bug fixed
@@ -921,7 +923,6 @@ class Rexle
         @instructions.unshift ["xml","version='1.0' encoding='UTF-8'"]
       end
     end
-    r << "\n" if o[:pretty] == true
 
     r << method(msg).call(self.root.children, o[:declaration]).strip
     r
