@@ -11,6 +11,8 @@ include REXML
 
 # modifications:
 
+# 02-Apr-2014: bug fix: Rexle::Element#each now returns the children, 
+#                       including the 1st text element
 # 24-Mar-2014: minor bug fix: A blank line is no longer inserted at the 
 #              top of the XML document
 # 14-Mar-2014: bug fix: An XML processing instruction will now only be 
@@ -558,7 +560,9 @@ class Rexle
       
       return r
     end 
-    
+
+    #alias child_elements children
+
     def children=(a)   @child_elements = a   end
     
     def deep_clone() Rexle.new(self.xml).root end
@@ -598,15 +602,12 @@ class Rexle
     end
 
     def doc_root() @rexle.root end
-    def each(&blk) 
-      @child_elements.each(&blk) #unless @child_elements.empty?
-    end
-    def has_elements?() !self.elements.empty? end
-    
+    def each(&blk)    self.children.each(&blk) end
+    def has_elements?() !self.elements.empty?  end    
     def insert_after(node)   insert(node, 1)   end          
     def insert_before(node)  insert(node)      end
-        
-    def root() self end #@rexle.root end
+    def map(&blk)    self.children.map(&blk)   end        
+    def root() self                            end 
 
     def text(s='')
 
