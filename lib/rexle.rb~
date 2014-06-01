@@ -11,6 +11,8 @@ include REXML
 
 # modifications:
 
+# 20-May-2014: feature: XPath Descendants after the element (or without
+#                       the element) are now supported
 # 02-Apr-2014: bug fix: Rexle::Element#each now returns the children, 
 #                       including the 1st text element
 # 24-Mar-2014: minor bug fix: A blank line is no longer inserted at the 
@@ -278,6 +280,7 @@ class Rexle
     end
     
     def xpath(path, rlist=[], &blk)
+
       r = filter_xpath(path, rlist=[], &blk)
       r.is_a?(Array) ? r.compact : r      
     end
@@ -345,7 +348,7 @@ class Rexle
           .match(/([^\[]+)(\[[^\]]+\])?/).captures 
 
       remaining_path = ($').to_s
-      
+
       r = raw_path[/([^\/]+)(?=\/\/)/,1] 
       if r then
         a_path = raw_path.split(/(?=\/\/)/,2)
@@ -412,7 +415,7 @@ class Rexle
         regex = /\[(\d+)\]$/
         n = xpath_value[regex,1]
         xpath_value.slice!(regex)
-        
+
         rs = scan_match(self, xpath_value).flatten.compact
         return n ? rs[n.to_i-1] : rs
 
@@ -753,6 +756,11 @@ class Rexle
 
     
     def scan_match(node, path)
+
+      if path == '//' then
+        return [node, !node.text.empty? ? node.text : nil, 
+          node.elements.map {|x| scan_match x, path}]
+      end
 
       r = []
       xpath2 = path[2..-1] 

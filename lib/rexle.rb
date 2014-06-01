@@ -11,6 +11,8 @@ include REXML
 
 # modifications:
 
+# 01-Jun-2014: bug fix: XPath elements separated by a pipe '|' are now 
+#                       stripped of white space
 # 20-May-2014: feature: XPath Descendants after the element (or without
 #                       the element) are now supported
 # 02-Apr-2014: bug fix: Rexle::Element#each now returns the children, 
@@ -310,7 +312,7 @@ class Rexle
         }
         bucket = []
         raw_results = path.split('|').map do |xp|
-          query_xpath(xp, bucket, &blk)         
+          query_xpath(xp.strip, bucket, &blk)         
         end
 
         results = raw_results
@@ -349,7 +351,7 @@ class Rexle
 
       remaining_path = ($').to_s
 
-      r = raw_path[/([^\/]+)(?=\/\/)/,1] 
+      r = raw_path[/^([^\/]+)(?=\/\/)/,1] 
       if r then
         a_path = raw_path.split(/(?=\/\/)/,2)
       else
