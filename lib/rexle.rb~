@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 03-Jun-2013: bug fix: Text elements are now nil by default
 # 01-Jun-2014: bug fix: XPath elements separated by a pipe '|' are now 
 #                       stripped of white space
 # 20-May-2014: feature: XPath Descendants after the element (or without
@@ -120,7 +121,10 @@ module XMLhelper
             a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
             tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
-            if x.value.length > 0 or (x.children.length > 0 and not x.children.is_an_empty_string?) then
+            if (x.value and x.value.length > 0) \
+                or (x.children and x.children.length > 0 \
+                and not x.children.is_an_empty_string?) then
+
               out = ["<%s>" % tag]
               #out << x.value unless x.value.nil? || x.value.empty?
               out << scan_print(x.children)
@@ -158,6 +162,8 @@ module XMLhelper
   def pretty_print(nodes, indent='0')
     indent = indent.to_i
 
+    return '' unless nodes
+
     nodes.select(){|x| x.is_a? Rexle::Element or (x.is_a? String and x.strip.length > 0)}
         .map.with_index do |x, i|
 
@@ -174,13 +180,15 @@ module XMLhelper
             tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
             start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
-            ind1 = x.children.grep(Rexle::Element).length > 0 ? 
-              ("\n" + '  ' * indent) : ''
-            out = ["%s<%s>%s" % [start, tag, ind1]]
 
-            out << pretty_print(x.children, (indent + 1).to_s.clone)
-            ind2 = ind1.length > 0 ? ("\n" + '  ' * (indent - 1)) : ''
+            ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
+              ("\n" + '  ' * indent) : ''
+
+            out = ["%s<%s>%s" % [start, tag, ind1]]
+            out << pretty_print(x.children, (indent + 1).to_s.clone) 
+            ind2 = (ind1 and ind1.length > 0) ? ("\n" + '  ' * (indent - 1)) : ''
             out << "%s</%s>" % [ind2, x.name]            
+            out
           end
       elsif x.is_a? String then
         x.sub(/^[\n\s]+$/,'')
@@ -241,7 +249,7 @@ class Rexle
     
     alias original_clone clone
 
-    def initialize(name=nil, value='', attributes={}, rexle=nil)
+    def initialize(name=nil, value=nil, attributes={}, rexle=nil)
 
       @rexle = rexle      
       super()
@@ -557,8 +565,8 @@ class Rexle
     def attributes() @attributes end    
       
     def children()
-      return unless @value
-      r = (@value.empty? ? [] : [@value])  + @child_elements
+      #return unless @value
+      r = (@value.to_s.empty? ? [] : [@value])  + @child_elements
       def r.is_an_empty_string?()
         self.length == 1 and self.first == ''
       end      
@@ -760,7 +768,7 @@ class Rexle
     def scan_match(node, path)
 
       if path == '//' then
-        return [node, !node.text.empty? ? node.text : nil, 
+        return [node, node.text, 
           node.elements.map {|x| scan_match x, path}]
       end
 
@@ -868,7 +876,7 @@ class Rexle
     else    
       a = yield
     end
-    doc_node = ['doc','',{}]
+    doc_node = ['doc',nil,{}]
     @a = procs[x.class.to_s.to_sym].call(x)
     @doc = scan_element(*(doc_node << @a))
     self

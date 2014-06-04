@@ -11,7 +11,9 @@ include REXML
 
 # modifications:
 
-# 03-Jun-2013: bug fix: Text elements are now nil by default
+# 04-Jun-2014: bug fix: If XPath contains /text(), only valid 
+#                       text elements are returned
+# 03-Jun-2014: bug fix: Text elements are now nil by default
 # 01-Jun-2014: bug fix: XPath elements separated by a pipe '|' are now 
 #                       stripped of white space
 # 20-May-2014: feature: XPath Descendants after the element (or without
@@ -440,6 +442,7 @@ class Rexle
 
       end
 
+
       if return_elements.length > 0 then
 
         if (a_path + [remaining_path]).join.empty? then
@@ -451,7 +454,12 @@ class Rexle
 
           rlist << return_elements.map.with_index do |x,i| 
 
-            rtn_element = filter(x, i+1, attr_search){|e| r = e.xpath(a_path.join('/') + raw_condition.to_s + remaining_path, &blk); (r || e) }
+            rtn_element = filter(x, i+1, attr_search) do |e| 
+              r = e.xpath(a_path.join('/') + raw_condition.to_s \
+                    + remaining_path, &blk)
+              #(r || e) 
+            end
+
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
 
             if rtn_element.is_a? Hash then
