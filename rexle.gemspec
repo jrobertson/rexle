@@ -1,17 +1,18 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '1.0.11'
+  s.version = '1.0.14'
   s.summary = 'Rexle is a simple XML parser written purely in Ruby'
   s.files = Dir['lib/**/*.rb']
   s.authors = ['James Robertson']
  
   s.signing_key = '../privatekeys/rexle.pem'
   s.cert_chain  = ['gem-public_cert.pem']
-  s.add_dependency('rexleparser')
-  s.add_dependency('dynarex-parser')
-  s.add_dependency('polyrex-parser')
-  s.add_dependency('rexle-builder') 
+  s.add_runtime_dependency('rexleparser', '~> 0.4', '>=0.4.16')
+  s.add_runtime_dependency('dynarex-parser', '~> 0.2', '>=0.2.15')
+  s.add_runtime_dependency('polyrex-parser', '~> 0.3', '>=0.3.4')
+  s.add_runtime_dependency('rexle-builder', '~> 0.1', '>=0.1.9') 
   s.license = 'MIT'
   s.email = 'james@r0bertson.co.uk'
   s.homepage = 'https://github.com/jrobertson/rexle'
+  s.required_ruby_version = '>= 2.1.2'
 end
