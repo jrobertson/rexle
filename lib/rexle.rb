@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 14-Jun-2014: bug fix: Processing instructions should now display properly
 # 07-Jun-2014: bug fix: An XPath nested within an XPath (using a selector) 
 #                       should now wok properly e.g. record/abc[item/xyz="red"]
 # 04-Jun-2014: bug fix: If XPath contains /text(), only valid 
@@ -107,7 +108,9 @@ module XMLhelper
   end
 
   def processing_instructions(s='')
-    self.instructions.map { |instruction|  "<?%s %s?>" % instruction }.join s
+    self.instructions.map do |instruction|
+      "<?%s?>" % instruction.join(' ') 
+    end.join s
   end
 
   def scan_print(nodes)

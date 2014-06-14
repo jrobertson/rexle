@@ -11,6 +11,8 @@ include REXML
 
 # modifications:
 
+# 07-Jun-2014: bug fix: An XPath nested within an XPath (using a selector) 
+#                       should now wok properly e.g. record/abc[item/xyz="red"]
 # 04-Jun-2014: bug fix: If XPath contains /text(), only valid 
 #                       text elements are returned
 # 03-Jun-2014: bug fix: Text elements are now nil by default
@@ -753,7 +755,7 @@ class Rexle
                 if x[0][/\//] then
                   path, value = x.values_at(0,-1)
 
-                  "e.xpath('#{path}').first.value == #{value}"
+                  "r = e.xpath('#{path}').first; r and r.value == #{value}"
                 else
                   "(name == '%s' and value %s '%s')" % [x[0], x[1], x[2].sub(/^['"](.*)['"]$/,'\1')]
                 end
@@ -827,6 +829,8 @@ class Rexle
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
 
+      r2 = e.xpath('records/dependency/summary/title')
+
       if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
@@ -838,7 +842,6 @@ class Rexle
       elsif attr_search[/^\(name ==/] and eval(attr_search) 
         block_given? ? blk.call(e) : e          
       elsif attr_search[/^e\.value/]
-
         v = attr_search[/[^\s]+$/]
         duck_type = %w(to_f to_i to_s).detect {|x| v == v.send(x).to_s}
         attr_search.sub!(/^e.value/,'e.value.' + duck_type)
@@ -846,7 +849,7 @@ class Rexle
         if eval(attr_search) then
           block_given? ? blk.call(e) : e
         end
-      elsif attr_search[/^e\.xpath/] and eval(attr_search)           
+      elsif attr_search[/e\.xpath/] and eval(attr_search)           
         block_given? ? blk.call(e) : e
       end      
     end
