@@ -11,7 +11,7 @@ include REXML
 
 # modifications:
 
-# 14-Jun-2014: bug fix: Processing instructions should now display properly
+# 12-Jul-2014: XPath with a single element condition now works e.g. b[c]
 # 07-Jun-2014: bug fix: An XPath nested within an XPath (using a selector) 
 #                       should now wok properly e.g. record/abc[item/xyz="red"]
 # 04-Jun-2014: bug fix: If XPath contains /text(), only valid 
@@ -309,6 +309,7 @@ class Rexle
 
       #    Array: proc {|x| x.flatten.compact}, 
       if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
+
         procs = {
           #jr061012 Array: proc {|x| block_given? ? x : x.flatten.uniq },
           Array: proc { |x| 
@@ -335,6 +336,7 @@ class Rexle
         procs[results.class.to_s.to_sym].call(results) if results
         
       else
+
         m, xpath_value = fn_match.captures        
         xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
       end
@@ -452,7 +454,7 @@ class Rexle
 
         if (a_path + [remaining_path]).join.empty? then
 
-          rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}.compact
+          rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}.compact          
           rlist = rlist[0] if rlist.length == 1
 
         else
@@ -822,6 +824,7 @@ class Rexle
       h = x[0][1]  # <-- fetch the attributes      
       
       if attr_search then
+
         attribute_search(attr_search,e, h, i, &blk)
       else
 
@@ -831,8 +834,6 @@ class Rexle
     end
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
-
-      r2 = e.xpath('records/dependency/summary/title')
 
       if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
@@ -853,6 +854,8 @@ class Rexle
           block_given? ? blk.call(e) : e
         end
       elsif attr_search[/e\.xpath/] and eval(attr_search)           
+        block_given? ? blk.call(e) : e
+      elsif e.element attr_search then
         block_given? ? blk.call(e) : e
       end      
     end
