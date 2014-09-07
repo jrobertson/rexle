@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 07-Aug-2014: feature: Rexle::CData can now be used to create CDATA
 # 12-Jul-2014: XPath with a single element condition now works e.g. b[c]
 # 07-Jun-2014: bug fix: An XPath nested within an XPath (using a selector) 
 #                       should now wok properly e.g. record/abc[item/xyz="red"]
@@ -861,6 +862,14 @@ class Rexle
     end
   end # -- end of element --
 
+  class CData < Element
+    
+    def initialize(value='')
+      super('![', value)
+    end
+    
+  end
+  
   class Elements
     include Enumerable
     
