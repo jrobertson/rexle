@@ -3,13 +3,10 @@
 # file: rexle.rb
 
 require 'rexml/document'
-
+require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
 require 'cgi'
-require 'requestor'
-eval Requestor.read('http://rorbuilder.info/r/ruby'){|x| x.require 'rexleparser' }
-
 include REXML
 
 # modifications:

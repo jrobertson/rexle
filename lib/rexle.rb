@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 16-Sep-2014: Feature: Impelemented Rexle::Element#each_recursive
 # 07-Aug-2014: feature: Rexle::CData can now be used to create CDATA
 # 12-Jul-2014: XPath with a single element condition now works e.g. b[c]
 # 07-Jun-2014: bug fix: An XPath nested within an XPath (using a selector) 
@@ -166,6 +167,7 @@ module XMLhelper
 
   end
   
+
 
   def pretty_print(nodes, indent='0')
     indent = indent.to_i
@@ -632,6 +634,7 @@ class Rexle
 
     def doc_root() @rexle.root end
     def each(&blk)    self.children.each(&blk) end
+    def each_recursive(&blk) recursive_scan(self.children,&blk) end
     def has_elements?() !self.elements.empty?  end    
     def insert_after(node)   insert(node, 1)   end          
     def insert_before(node)  insert(node)      end
@@ -860,6 +863,17 @@ class Rexle
         block_given? ? blk.call(e) : e
       end      
     end
+    
+    def recursive_scan(nodes, &blk)
+      
+      nodes.each do |x|
+        if x.is_a? Rexle::Element then
+          blk.call(x)
+          recursive_scan(x.children, &blk) if x.children.length > 1
+        end      
+      end
+    end
+        
   end # -- end of element --
 
   class CData < Element
