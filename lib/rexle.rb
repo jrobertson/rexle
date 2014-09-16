@@ -632,14 +632,15 @@ class Rexle
       procs[s.class.to_s.to_sym].call(s)      
     end
 
-    def doc_root() @rexle.root end
-    def each(&blk)    self.children.each(&blk) end
+    def doc_root() @rexle.root                                  end
+    def each(&blk)    self.children.each(&blk)                  end
     def each_recursive(&blk) recursive_scan(self.children,&blk) end
-    def has_elements?() !self.elements.empty?  end    
-    def insert_after(node)   insert(node, 1)   end          
-    def insert_before(node)  insert(node)      end
-    def map(&blk)    self.children.map(&blk)   end        
-    def root() self                            end 
+    alias traverse each_recursive
+    def has_elements?() !self.elements.empty?                   end    
+    def insert_after(node)   insert(node, 1)                    end          
+    def insert_before(node)  insert(node)                       end
+    def map(&blk)    self.children.map(&blk)                    end        
+    def root() self                                             end 
 
     def text(s='')
 
