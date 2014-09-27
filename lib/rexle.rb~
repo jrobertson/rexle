@@ -870,7 +870,7 @@ class Rexle
       nodes.each do |x|
         if x.is_a? Rexle::Element then
           blk.call(x)
-          recursive_scan(x.children, &blk) if x.children.length > 1
+          recursive_scan(x.children, &blk) if x.children.length > 0
         end      
       end
     end

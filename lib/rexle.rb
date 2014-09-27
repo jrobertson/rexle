@@ -11,6 +11,7 @@ include REXML
 
 # modifications:
 
+# 27-Sep-2014: bug fix: ELement values are now explicitly transformed to string
 # 16-Sep-2014: Feature: Impelemented Rexle::Element#each_recursive
 # 07-Aug-2014: feature: Rexle::CData can now be used to create CDATA
 # 12-Jul-2014: XPath with a single element condition now works e.g. b[c]
@@ -1029,7 +1030,7 @@ class Rexle
     
   def scan_element(name, value=nil, attributes=nil, *children)
 
-    element = Element.new(name, value, attributes, self)  
+    element = Element.new(name, value.to_s, attributes, self)  
 
     if children then
       children.each do |x|
