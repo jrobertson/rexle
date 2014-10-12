@@ -6,11 +6,13 @@ require 'rexml/document'
 require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
+require 'rexle-css'
 require 'cgi'
 include REXML
 
 # modifications:
 
+# 12-Oct-2014: feature: Implemented CSS style element selection
 # 27-Sep-2014: bug fix: ELement values are now explicitly transformed to string
 # 16-Sep-2014: Feature: Impelemented Rexle::Element#each_recursive
 # 07-Aug-2014: feature: Rexle::CData can now be used to create CDATA
@@ -246,7 +248,11 @@ class Rexle
       
     end
 
-  end  
+  end
+  
+  def css(selector)
+    @doc.root.xpath RexleCSS.new(selector).to_xpath
+  end
   
   def xpath(path,  &blk)
     @doc.xpath(path,  &blk)
@@ -285,6 +291,10 @@ class Rexle
       length = query_xpath(path).flatten.compact.length
       length
     end
+
+    def css(selector)
+      self.root.xpath RexleCSS.new(selector).to_xpath
+    end    
     
     def max(path) 
       a = query_xpath(path).flatten.select{|x| x.is_a? String}.map(&:to_i)
@@ -1030,7 +1040,7 @@ class Rexle
     
   def scan_element(name, value=nil, attributes=nil, *children)
 
-    element = Element.new(name, value.to_s, attributes, self)  
+    element = Element.new(name, (value ? value.to_s : value), attributes, self)  
 
     if children then
       children.each do |x|
