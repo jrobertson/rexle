@@ -12,6 +12,7 @@ include REXML
 
 # modifications:
 
+# 13-Oct-2014: feature: Implemented Rexle#clone
 # 12-Oct-2014: feature: Implemented CSS style element selection
 # 27-Sep-2014: bug fix: ELement values are now explicitly transformed to string
 # 16-Sep-2014: Feature: Impelemented Rexle::Element#each_recursive
@@ -250,6 +251,9 @@ class Rexle
 
   end
   
+  def clone()
+    Rexle.new self.to_a
+  end
   def css(selector)
     @doc.root.xpath RexleCSS.new(selector).to_xpath
   end
