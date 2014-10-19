@@ -14,6 +14,9 @@ include REXML
 
 # 19-Oct-2014: feature: An XPath containing the attribute @class is 
 #              now treated as a type of CSS selector storage area
+#              feature: Implemented Rexle::Element#previous_element and
+#                       Rexle::Element#next_element
+
 # 13-Oct-2014: feature: Implemented Rexle#clone
 # 12-Oct-2014: feature: Implemented CSS style element selection
 # 27-Sep-2014: bug fix: ELement values are now explicitly transformed to string
@@ -315,6 +318,30 @@ class Rexle
         @name
       end
     end
+    
+    def next_element()      
+      
+      id  = self.object_id
+      a = self.parent.child_elements      
+      i = a.index {|x| x.object_id == id} + 1
+      
+      a[i] if  i < a.length
+        
+    end
+    
+    alias next_sibling next_element
+    
+    def previous_element()      
+      
+      id  = self.object_id
+      a = self.parent.child_elements      
+      i = a.index {|x| x.object_id == id} - 1
+      
+      a[i] if  i >= 0 
+
+    end
+    
+    alias previous_sibling previous_element
     
     def xpath(path, rlist=[], &blk)
 

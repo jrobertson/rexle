@@ -12,6 +12,8 @@ include REXML
 
 # modifications:
 
+# 19-Oct-2014: feature: An XPath containing the attribute @class is 
+#              now treated as a type of CSS selector storage area
 # 13-Oct-2014: feature: Implemented Rexle#clone
 # 12-Oct-2014: feature: Implemented CSS style element selection
 # 27-Sep-2014: bug fix: ELement values are now explicitly transformed to string
@@ -752,14 +754,19 @@ class Rexle
         indices = [0] + andor_items + [raw_items.length]
 
         if raw_items[0][0] == '@' then
+
           raw_items.each{|x| x.gsub!(/^@/,'')}
           cons_items = indices.each_cons(2).map{|x,y| raw_items.slice(x...y)}          
 
           items = cons_items.map do |x| 
 
             if x.length >= 3 then
-              x[1] = '==' if x[1] == '='
-              "h[:'%s'] %s %s" % x
+              if x[0] != 'class' then
+                x[1] = '==' if x[1] == '='
+                "h[:'%s'] %s %s" % x
+              else
+                "h[:class].include? %s" % x.last
+              end
             else
 
               x.join[/^(and|or)$/] ? x : ("h[:'%s']" % x)
@@ -859,7 +866,7 @@ class Rexle
         block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
         block_given? ? blk.call(e) : e
-      elsif h and attr_search[/^h\[/] and eval(attr_search)
+      elsif h and !h.empty? and attr_search[/^h\[/] and eval(attr_search) then
         block_given? ? blk.call(e) : e
       elsif attr_search[/^\(name ==/] and e.child_lookup.select{|name, attributes, value| eval(attr_search) }.length > 0
         block_given? ? blk.call(e) : e
