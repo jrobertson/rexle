@@ -12,6 +12,8 @@ include REXML
 
 # modifications:
 
+# 21-Oct-2014: partial feature: An Xpath containing //preceding-sibling and 
+#                       //following-sibling now works
 # 19-Oct-2014: feature: An XPath containing the attribute @class is 
 #              now treated as a type of CSS selector storage area
 #              feature: Implemented Rexle::Element#previous_element and
@@ -345,6 +347,7 @@ class Rexle
     
     def xpath(path, rlist=[], &blk)
 
+      #return if path[/^(?:preceding|following)-sibling/]
       r = filter_xpath(path, rlist=[], &blk)
       r.is_a?(Array) ? r.compact : r      
     end
@@ -489,9 +492,35 @@ class Rexle
       #jr101013  return  [self]
       else
 
-        return_elements = @child_lookup.map.with_index.select do |x|    
-          (x[0][0] == element_name || element_name == '.') or \
-            (element_name == '*' && x[0].is_a?(Array))
+        if element_name.is_a? String then
+          ename, raw_selector = (element_name.split('::',2)).reverse
+          
+          selector = case raw_selector
+            when 'following-sibling' then 1
+            when 'preceding-sibling' then -1
+          end
+          
+        else
+          ename = element_name
+        end        
+        
+        return_elements = @child_lookup.map.with_index.select do |x|
+                    
+          (x[0][0] == ename || ename == '.') or \
+            (ename == '*' && x[0].is_a?(Array))
+        end
+        
+        if selector then
+          ne = return_elements.inject([]) do |r,x| 
+            i = x.last + selector
+            if i >= 0 then
+              r << i
+            else
+              r
+            end
+          end
+
+          return_elements = ne.map {|x| [@child_lookup[x], x] if x}
         end
 
       end

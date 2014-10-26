@@ -12,6 +12,9 @@ include REXML
 
 # modifications:
 
+# 26-Oct-2014: bug fix: XML output containing a class attribute, 
+#                       now appears as a string.   Empty nodes are 
+#                       now displayed as self-closing tags.
 # 21-Oct-2014: partial feature: An Xpath containing //preceding-sibling and 
 #                       //following-sibling now works
 # 19-Oct-2014: feature: An XPath containing the attribute @class is 
@@ -94,7 +97,9 @@ module XMLhelper
   def doc_print(children, declaration=true)
     
     body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
-    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
+    a = self.root.attributes.to_a.map do |k,v| 
+      "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+    end
     xml = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : \
       ' ' + a.join(' '), body, self.root.name]
     
@@ -108,7 +113,11 @@ module XMLhelper
   def doc_pretty_print(children, declaration=true)
 
     body = pretty_print(children,2).join
-    a = self.root.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}
+    
+    a = self.root.attributes.to_a.map do |k,v| 
+      "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+    end
+    
     ind = "\n  "   
     xml = "<%s%s>%s%s%s</%s>" % [self.root.name, a.empty? ? '' : \
       ' ' + a.join(' '), ind, body, "\n", self.root.name]
@@ -138,7 +147,9 @@ module XMLhelper
             "<![CDATA[%s]]>" % x.value
           else
 
-            a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+            a = x.attributes.to_a.map do |k,v| 
+              "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+            end
             tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
             if (x.value and x.value.length > 0) \
@@ -196,20 +207,27 @@ module XMLhelper
             "<![CDATA[%s]]>" % x.value
           else
             #return ["<%s/>" % x.name] if x.value = ''
-            a = x.attributes.to_a.map{|k,v| "%s='%s'" % [k,v]}      
+            a = x.attributes.to_a.map do |k,v| 
+              "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+            end
             a ||= [] 
             tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
-
             start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
+            
+            if (x.value and x.value.length > 0) \
+                or (x.children and x.children.length > 0 \
+                and not x.children.is_an_empty_string?) then
 
-            ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
-              ("\n" + '  ' * indent) : ''
-
-            out = ["%s<%s>%s" % [start, tag, ind1]]
-            out << pretty_print(x.children, (indent + 1).to_s.clone) 
-            ind2 = (ind1 and ind1.length > 0) ? ("\n" + '  ' * (indent - 1)) : ''
-            out << "%s</%s>" % [ind2, x.name]            
-            out
+              ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
+                ("\n" + '  ' * indent) : ''
+                
+              out = ["%s<%s>%s" % [start, tag, ind1]]
+              out << pretty_print(x.children, (indent + 1).to_s.clone) 
+              ind2 = (ind1 and ind1.length > 0) ? ("\n" + '  ' * (indent - 1)) : ''
+              out << "%s</%s>" % [ind2, x.name]            
+            else
+              out = ["%s<%s/>" % [start, tag]]
+            end
           end
       elsif x.is_a? String then
         x.sub(/^[\n\s]+$/,'')
