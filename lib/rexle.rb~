@@ -14,7 +14,9 @@ include REXML
 
 # 26-Oct-2014: bug fix: XML output containing a class attribute, 
 #                       now appears as a string.   Empty nodes are 
-#                       now displayed as self-closing tags.
+#                       now displayed as self-closing tags. 
+#                       An XPath containing a @class attribute is now 
+#                       first validated against the element attribute existence
 # 21-Oct-2014: partial feature: An Xpath containing //preceding-sibling and 
 #                       //following-sibling now works
 # 19-Oct-2014: feature: An XPath containing the attribute @class is 
@@ -839,7 +841,7 @@ class Rexle
                 x[1] = '==' if x[1] == '='
                 "h[:'%s'] %s %s" % x
               else
-                "h[:class].include? %s" % x.last
+                "h[:class] and h[:class].include? %s" % x.last
               end
             else
 
