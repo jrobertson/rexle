@@ -12,6 +12,9 @@ include REXML
 
 # modifications:
 
+# 27-Oct-2014: bug fix: Now Checks for an array instead of a string when 
+#                       outputting xml attribute values to get 
+#                       around nil values
 # 26-Oct-2014: bug fix: XML output containing a class attribute, 
 #                       now appears as a string.   Empty nodes are 
 #                       now displayed as self-closing tags. 
@@ -100,12 +103,14 @@ module XMLhelper
   def doc_print(children, declaration=true)
     
     body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
-    a = self.root.attributes.to_a.map do |k,v| 
-      "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+
+    a = self.root.attributes.to_a.map do |k,v|
+      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
     end
+
     xml = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : \
       ' ' + a.join(' '), body, self.root.name]
-    
+
     if self.instructions and declaration then
       processing_instructions() + xml
     else 
@@ -118,7 +123,7 @@ module XMLhelper
     body = pretty_print(children,2).join
     
     a = self.root.attributes.to_a.map do |k,v| 
-      "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
     end
     
     ind = "\n  "   
@@ -151,8 +156,9 @@ module XMLhelper
           else
 
             a = x.attributes.to_a.map do |k,v| 
-              "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+              "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
             end
+
             tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
             if (x.value and x.value.length > 0) \
@@ -211,7 +217,7 @@ module XMLhelper
           else
             #return ["<%s/>" % x.name] if x.value = ''
             a = x.attributes.to_a.map do |k,v| 
-              "%s='%s'" % [k,(v.is_a?(String) ? v : v.join(' '))]
+              "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
             end
             a ||= [] 
             tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))

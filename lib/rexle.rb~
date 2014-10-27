@@ -17,6 +17,7 @@ include REXML
 #                       now displayed as self-closing tags. 
 #                       An XPath containing a @class attribute is now 
 #                       first validated against the element attribute existence
+#                       Rexle::Element#attribute now checks the attributes type
 # 21-Oct-2014: partial feature: An Xpath containing //preceding-sibling and 
 #                       //following-sibling now works
 # 19-Oct-2014: feature: An XPath containing the attribute @class is 
@@ -669,8 +670,14 @@ class Rexle
     end
     
     def attribute(key) 
+      
       key = key.to_sym if key.is_a? String
-      @attributes[key].gsub('&lt;','<').gsub('&gt;','>')
+      
+      if @attributes[key].is_a? String then
+        @attributes[key].gsub('&lt;','<').gsub('&gt;','>') 
+      else
+        @attributes[key]
+      end
     end  
     
     def attributes() @attributes end    
