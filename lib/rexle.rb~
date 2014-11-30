@@ -12,6 +12,7 @@ include REXML
 
 # modifications:
 
+# 21-Nov-2014: feature: Added at_css() to select a single element
 # 27-Oct-2014: bug fix: Now Checks for an array instead of a string when 
 #                       outputting xml attribute values to get 
 #                       around nil values
@@ -250,7 +251,7 @@ end
 class Rexle
   include XMLhelper
 
-  attr_reader :prefixes
+  attr_reader :prefixes, :doctype
   attr_accessor :instructions
   
   def initialize(x=nil)
@@ -258,6 +259,7 @@ class Rexle
     super()
 
     @instructions = [["xml", "version='1.0' encoding='UTF-8'"]] 
+    @doctype = :xml
 
     # what type of input is it? Is it a string, array, or REXML doc?
     if x then
@@ -288,6 +290,11 @@ class Rexle
   def clone()
     Rexle.new self.to_a
   end
+  
+  def at_css(selector)
+    @doc.root.element RexleCSS.new(selector).to_xpath
+  end  
+  
   def css(selector)
     @doc.root.xpath RexleCSS.new(selector).to_xpath
   end
@@ -330,6 +337,10 @@ class Rexle
       length
     end
 
+    def at_css(selector)
+      self.root.element RexleCSS.new(selector).to_xpath
+    end 
+    
     def css(selector)
       self.root.xpath RexleCSS.new(selector).to_xpath
     end    

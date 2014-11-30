@@ -12,6 +12,7 @@ include REXML
 
 # modifications:
 
+# 30-Nov-2014: feature: XPath now supports parent (..) traversal e.g. b/../b2
 # 21-Nov-2014: feature: Added at_css() to select a single element
 # 27-Oct-2014: bug fix: Now Checks for an array instead of a string when 
 #                       outputting xml attribute values to get 
@@ -541,26 +542,34 @@ class Rexle
         else
           ename = element_name
         end        
-        
-        return_elements = @child_lookup.map.with_index.select do |x|
-                    
-          (x[0][0] == ename || ename == '.') or \
-            (ename == '*' && x[0].is_a?(Array))
-        end
-        
-        if selector then
-          ne = return_elements.inject([]) do |r,x| 
-            i = x.last + selector
-            if i >= 0 then
-              r << i
-            else
-              r
-            end
+
+        if ename != '..' then
+          
+          return_elements = @child_lookup.map.with_index.select do |x|
+                      
+            (x[0][0] == ename || ename == '.') or \
+              (ename == '*' && x[0].is_a?(Array))
           end
+          
+          if selector then
+            ne = return_elements.inject([]) do |r,x| 
+              i = x.last + selector
+              if i >= 0 then
+                r << i
+              else
+                r
+              end
+            end
 
-          return_elements = ne.map {|x| [@child_lookup[x], x] if x}
+            return_elements = ne.map {|x| [@child_lookup[x], x] if x}
+          end
+        else
+                    
+          remaining_xpath = raw_path[/\.\.\/(.*)/,1]
+          # select the parent element
+          return self.parent.xpath(remaining_xpath)
+          
         end
-
       end
 
 
