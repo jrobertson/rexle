@@ -12,6 +12,8 @@ include REXML
 
 # modifications:
 
+# 07-Dec-2014: featureL The Rexle::Element#Css() parameter can now contain 
+#                       multiple css paths within the string e.g. '.abc, div'
 # 30-Nov-2014: feature: XPath now supports parent (..) traversal e.g. b/../b2
 # 21-Nov-2014: feature: Added at_css() to select a single element
 # 27-Oct-2014: bug fix: Now Checks for an array instead of a string when 
@@ -297,7 +299,7 @@ class Rexle
   end  
   
   def css(selector)
-    @doc.root.xpath RexleCSS.new(selector).to_xpath
+    selector.split(',').flat_map{|x| @doc.root.xpath RexleCSS.new(x).to_xpath}
   end
   
   def xpath(path,  &blk)
@@ -343,7 +345,9 @@ class Rexle
     end 
     
     def css(selector)
-      self.root.xpath RexleCSS.new(selector).to_xpath
+
+      selector.split(',')\
+                  .flat_map{|x| self.root.xpath RexleCSS.new(x).to_xpath}
     end    
     
     def max(path) 
