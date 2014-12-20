@@ -12,7 +12,9 @@ include REXML
 
 # modifications:
 
-# 07-Dec-2014: featureL The Rexle::Element#Css() parameter can now contain 
+# 20-Dec-2014: bug fix: Fixes an uncommon XPath selection. 
+#  see http://www.jamesrobertson.eu/bugtracker/2014/dec/18/xpath-returns-an-empty-list.html
+# 07-Dec-2014: feature: The Rexle::Element#Css() parameter can now contain 
 #                       multiple css paths within the string e.g. '.abc, div'
 # 30-Nov-2014: feature: XPath now supports parent (..) traversal e.g. b/../b2
 # 21-Nov-2014: feature: Added at_css() to select a single element
@@ -899,8 +901,12 @@ class Rexle
               if x[0] != '.' then
                 if x[0][/\//] then
                   path, value = x.values_at(0,-1)
-
-                  "r = e.xpath('#{path}').first; r and r.value == #{value}"
+                  
+                  if x[0][/@\w+$/] then
+                    "r = e.xpath('#{path}').first; r and r == #{value}"
+                  else
+                    "r = e.xpath('#{path}').first; r and r.value == #{value}"
+                  end
                 else
                   "(name == '%s' and value %s '%s')" % [x[0], x[1], x[2].sub(/^['"](.*)['"]$/,'\1')]
                 end
@@ -986,6 +992,7 @@ class Rexle
       elsif attr_search[/^\(name ==/] and eval(attr_search) 
         block_given? ? blk.call(e) : e          
       elsif attr_search[/^e\.value/]
+
         v = attr_search[/[^\s]+$/]
         duck_type = %w(to_f to_i to_s).detect {|x| v == v.send(x).to_s}
         attr_search.sub!(/^e.value/,'e.value.' + duck_type)
