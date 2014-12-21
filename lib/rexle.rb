@@ -12,6 +12,7 @@ include REXML
 
 # modifications:
 
+# 21-Dec-2014: HTML related: A script tag will no longer be a self-closing tag.
 # 20-Dec-2014: bug fix: Fixes an uncommon XPath selection. 
 #  see http://www.jamesrobertson.eu/bugtracker/2014/dec/18/xpath-returns-an-empty-list.html
 # 07-Dec-2014: feature: The Rexle::Element#Css() parameter can now contain 
@@ -159,6 +160,8 @@ module XMLhelper
             "<!--%s-->" % x.value  
           when '!['    
             "<![CDATA[%s]]>" % x.value
+          when 'script'    
+            "<script>%s</script>" % x.value
           else
 
             a = x.attributes.to_a.map do |k,v| 
@@ -220,6 +223,8 @@ module XMLhelper
             "<!--%s-->" % x.value  
           when '!['    
             "<![CDATA[%s]]>" % x.value
+          when 'script'    
+            "<script>%s</script>" % x.value
           else
             #return ["<%s/>" % x.name] if x.value = ''
             a = x.attributes.to_a.map do |k,v| 
