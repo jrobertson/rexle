@@ -12,6 +12,7 @@ include REXML
 
 # modifications:
 
+# 25-Dec-2014: bug fix: script tag is now formatted with expected attributes
 # 21-Dec-2014: HTML related: A script tag will no longer be a self-closing tag.
 # 20-Dec-2014: bug fix: Fixes an uncommon XPath selection. 
 #  see http://www.jamesrobertson.eu/bugtracker/2014/dec/18/xpath-returns-an-empty-list.html
@@ -160,8 +161,6 @@ module XMLhelper
             "<!--%s-->" % x.value  
           when '!['    
             "<![CDATA[%s]]>" % x.value
-          when 'script'    
-            "<script>%s</script>" % x.value
           else
 
             a = x.attributes.to_a.map do |k,v| 
@@ -172,7 +171,7 @@ module XMLhelper
 
             if (x.value and x.value.length > 0) \
                 or (x.children and x.children.length > 0 \
-                and not x.children.is_an_empty_string?) then
+                and not x.children.is_an_empty_string?) or x.name == 'script' then
 
               out = ["<%s>" % tag]
               #out << x.value unless x.value.nil? || x.value.empty?
@@ -223,8 +222,6 @@ module XMLhelper
             "<!--%s-->" % x.value  
           when '!['    
             "<![CDATA[%s]]>" % x.value
-          when 'script'    
-            "<script>%s</script>" % x.value
           else
             #return ["<%s/>" % x.name] if x.value = ''
             a = x.attributes.to_a.map do |k,v| 
@@ -236,7 +233,7 @@ module XMLhelper
             
             if (x.value and x.value.length > 0) \
                 or (x.children and x.children.length > 0 \
-                and not x.children.is_an_empty_string?) then
+                and not x.children.is_an_empty_string?) or x.name == 'script'  then
 
               ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
                 ("\n" + '  ' * indent) : ''
