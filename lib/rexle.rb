@@ -12,6 +12,8 @@ include REXML
 
 # modifications:
 
+# 26-Jan-2015: bug fix: An element containing a nil value is now treated as an 
+#                       empty string when quering with an XPath
 # 25-Dec-2014: bug fix: script tag is now formatted with expected attributes
 # 21-Dec-2014: HTML related: A script tag will no longer be a self-closing tag.
 # 20-Dec-2014: bug fix: Fixes an uncommon XPath selection. 
@@ -799,6 +801,10 @@ class Rexle
       [@value] + @child_elements.select {|x| x.is_a? String}
     end
 
+    def value()
+      @value.to_s
+    end
+    
     def value=(raw_s)
 
       @value = String.new(raw_s.to_s.clone)
