@@ -12,6 +12,8 @@ require 'cgi'
 # modifications:
 
 # 29-Jan-2015: Removed code references to REXML, as it was no longer needed.
+#              feature: Implemented Rexle::Element#cdatas. A CData element is 
+#                       now created from the parsing stage.
 # 26-Jan-2015: bug fix: An element containing a nil value is now treated as an 
 #                       empty string when quering with an XPath
 # 25-Dec-2014: bug fix: script tag is now formatted with expected attributes
@@ -327,6 +329,10 @@ class Rexle
       raise "Element name must not be blank" unless name
       @child_elements = []
       @child_lookup = []
+    end
+    
+    def cdata?()
+      self.is_a? CData
     end
 
     def contains(raw_args)
@@ -717,6 +723,10 @@ class Rexle
     
     def attributes() @attributes end    
       
+    def cdatas()
+      self.children.select{|x| x.is_a? CData}
+    end
+      
     def children()
       #return unless @value
       r = (@value.to_s.empty? ? [] : [@value])  + @child_elements
@@ -732,7 +742,10 @@ class Rexle
     def children=(a)   @child_elements = a   end
     
     def deep_clone() Rexle.new(self.xml).root end
-    def clone() Element.new(@name, @value, @attributes) end
+      
+    def clone() 
+      Element.new(@name, @value, @attributes) 
+    end
           
     def delete(obj=nil)
 
@@ -1032,6 +1045,10 @@ class Rexle
       super('![', value)
     end
     
+    def clone()
+      CData.new(@name, @value)
+    end
+    
   end
   
   class Elements
@@ -1176,6 +1193,8 @@ class Rexle
     
   def scan_element(name, value=nil, attributes=nil, *children)
 
+    return CData.new(value) if name == '!['
+      
     element = Element.new(name, (value ? value.to_s : value), attributes, self)  
 
     if children then
