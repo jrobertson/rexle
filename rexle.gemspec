@@ -1,13 +1,13 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '1.1.2'
+  s.version = '1.1.4'
   s.summary = 'Rexle is an XML parser written purely in Ruby'
   s.files = Dir['lib/**/*.rb']
   s.authors = ['James Robertson']
  
   s.signing_key = '../privatekeys/rexle.pem'
   s.cert_chain  = ['gem-public_cert.pem']
-  s.add_runtime_dependency('rexleparser', '~> 0.5', '>=0.5.3')
+  s.add_runtime_dependency('rexleparser', '~> 0.5', '>=0.5.6')
   s.add_runtime_dependency('dynarex-parser', '~> 0.2', '>=0.2.15')
   s.add_runtime_dependency('polyrex-parser', '~> 0.3', '>=0.3.4')
   s.add_runtime_dependency('rexle-builder', '~> 0.1', '>=0.1.9') 
