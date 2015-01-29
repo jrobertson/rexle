@@ -2,16 +2,16 @@
 
 # file: rexle.rb
 
-require 'rexml/document'
 require 'rexleparser'
 require 'dynarex-parser'
 require 'polyrex-parser'
 require 'rexle-css'
 require 'cgi'
-include REXML
+
 
 # modifications:
 
+# 29-Jan-2015: Removed code references to REXML, as it was no longer needed.
 # 26-Jan-2015: bug fix: An element containing a nil value is now treated as an 
 #                       empty string when quering with an XPath
 # 25-Dec-2014: bug fix: script tag is now formatted with expected attributes
@@ -274,8 +274,7 @@ class Rexle
     if x then
       procs = {
         String: proc {|x| parse_string(x)},
-        Array: proc {|x| x},
-        :"REXML::Document" =>  proc {|x| scan_doc x.root}
+        Array: proc {|x| x}
       }
       
       doc_node = ['doc','',{}]
@@ -1060,8 +1059,7 @@ class Rexle
     if x then
       procs = {
         String: proc {|x| parse_string(x)},
-        Array: proc {|x| x},
-        :"REXML::Document" =>  proc {|x| scan_doc x.root}
+        Array: proc {|x| x}
       }
       a = procs[x.class.to_s.to_sym].call(x)
     else    
@@ -1149,13 +1147,12 @@ class Rexle
     # check if the XML string is a dynarex document
     if x[/<summary>/] then
 
-      doc = Document.new("<summary>" + x[/(.*?(<\/?summary>)){2}/m,1])
-      recordx_type = doc.root.text('recordx_type')
+      recordx_type = x[/<recordx_type>(\w+)/m,1]
 
       if recordx_type then
         procs = {
           'dynarex' => proc {|x| DynarexParser.new(x).to_a},
-          'polyrex' => proc {|x| PolyrexParser.new(x).to_a},
+          #'polyrex' => proc {|x| PolyrexParser.new(x).to_a},
           'polyrex' => proc {|x| RexleParser.new(x).to_a}
         }
         procs[recordx_type].call(x)
