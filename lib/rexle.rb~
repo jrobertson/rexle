@@ -724,7 +724,7 @@ class Rexle
     def attributes() @attributes end    
       
     def cdatas()
-      self.children.select{|x| x.is_a? CData}
+      self.children.inject([]){|r,x| x.is_a?(Rexle::CData) ? r << x.text : r }
     end
       
     def children()

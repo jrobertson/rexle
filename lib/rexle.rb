@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 30-Jan-2015: Rexle::Element#texts now returns the values of 
+#                CData elements as well as strings
 # 29-Jan-2015: Removed code references to REXML, as it was no longer needed.
 #              feature: Implemented Rexle::Element#cdatas. A CData element is 
 #                       now created from the parsing stage.
@@ -773,7 +775,7 @@ class Rexle
 
     def elements(s=nil)
       procs = {
-        NilClass: proc {Elements.new(@child_elements.select{|x| x.is_a? Rexle::Element })},
+        NilClass: proc {Elements.new(@child_elements.select{|x| x.kind_of? Rexle::Element })},
         String: proc {|x| @child_elements[x]}
       }
 
@@ -810,7 +812,9 @@ class Rexle
     end
     
     def texts()
-      [@value] + @child_elements.select {|x| x.is_a? String}
+      [@value] + @child_elements.inject([]) do |r, x| 
+        r << x.to_s if (x.is_a?(String) or x.is_a?(CData))
+      end
     end
 
     def value()
@@ -1049,6 +1053,10 @@ class Rexle
       CData.new(@name, @value)
     end
     
+    def to_s()
+      self.value
+    end
+    
   end
   
   class Elements
@@ -1173,10 +1181,12 @@ class Rexle
           'polyrex' => proc {|x| RexleParser.new(x).to_a}
         }
         procs[recordx_type].call(x)
+        
       else
 
         rp = RexleParser.new(x)
         a = rp.to_a
+
         @instructions = rp.instructions
         return a
       end
@@ -1192,7 +1202,7 @@ class Rexle
   end
     
   def scan_element(name, value=nil, attributes=nil, *children)
-
+    
     return CData.new(value) if name == '!['
       
     element = Element.new(name, (value ? value.to_s : value), attributes, self)  
