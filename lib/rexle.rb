@@ -196,7 +196,7 @@ module XMLhelper
 
       if x.is_a? Rexle::Element then
 
-        a = [x.name, x.value, x.attributes]
+        a = [x.name, x.attributes, x.value]
         (a.concat(scan_to_a(x.children))) if x.children.length > 1
         r << a
       elsif x.is_a? String then
@@ -716,7 +716,7 @@ class Rexle
     end
 
     def add_text(s)
-      self.value += s
+      self.value = (self.value || '') + s
       self 
     end
     
@@ -819,7 +819,7 @@ class Rexle
 
     def value()
       #@value.to_s
-      @child_elements.first
+      @child_elements.first if @child_elements.any?
 
     end
         
@@ -839,13 +839,15 @@ class Rexle
         self.parent.instance_variable_set(:@child_lookup, a)
       end
 =end      
-      @child_elements.first = val
+      
+      @child_elements.any? ? @child_elements.first = val : \
+                                       @child_elements << Rexle::Text.new(val)
     end
 
     alias text= value=
         
     def to_a()
-      [self.name, self.value, self.attributes, *scan_to_a(self.children)]
+      [self.name, self.attributes, self.value, *scan_to_a(self.children)]
     end
 
     def xml(options={})
