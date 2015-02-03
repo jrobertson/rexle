@@ -14,6 +14,7 @@ require 'cgi'
 # 03-Jan-2015: Rexle::Text now behaves like a String
 #              bug fix: Within Rexle::Element#text() when an xpath is passed 
 #              in, the text method will only be called if an element is found.
+#              Rexle::Text can now be passed a Range
 # 02-Jan-2015: Text values are now represented as Rexle::Text elements.
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
@@ -1064,7 +1065,7 @@ class Rexle
       @value = value
     end
     
-    def [](obj,i=nil)      @value[obj,i]                  end
+    def [](*args)          @value[*args]                  end
     def +(s)               @value = Text.new(@value + s)  end    
     def ==(obj)            @value == obj                  end    
     def <<(s)              @value << s                    end    
