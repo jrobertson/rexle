@@ -9,14 +9,16 @@ require 'rexle-css'
 require 'cgi'
 
 
-# modifications:
+## modifications:
 
 # 03-Jan-2015: Rexle::Text now behaves like a String
 #              bug fix: Within Rexle::Element#text() when an xpath is passed 
 #              in, the text method will only be called if an element is found.
 #              Rexle::Text can now be passed a Range
-#              Rexle::Text now suppoerts the String related methods :scan, 
+#              Rexle::Text now supports the String related methods :scan, 
 #                 :split, :each_char
+#              bug fix: If a Rexle:Text element is passed into a 
+#              Rexle::Text element the value is now properly set
 # 02-Jan-2015: Text values are now represented as Rexle::Text elements.
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
@@ -323,7 +325,7 @@ class Rexle
     
     alias original_clone clone
 
-    def initialize(name=nil, attributes={}, rexle=nil)
+    def initialize(name=nil, value: nil, attributes: {}, rexle: nil)
 
       @rexle = rexle      
       super()
@@ -332,6 +334,7 @@ class Rexle
 
       raise "Element name must not be blank" unless name
       @child_elements = []
+      self.add_text value if value
 
     end
     
@@ -719,7 +722,7 @@ class Rexle
     end
 
     def add_text(s)
-      self.value = (self.value || '') + s
+      self.value = (self.value || '') + s.to_s
       self 
     end
     
@@ -759,7 +762,7 @@ class Rexle
     def deep_clone() Rexle.new(self.xml).root end
       
     def clone() 
-      Element.new(@name, @attributes) 
+      Element.new(@name, attributes: @attributes) 
     end
           
     def delete(obj=nil)
@@ -842,8 +845,8 @@ class Rexle
         self.parent.instance_variable_set(:@child_lookup, a)
       end
 =end      
-      
-      @child_elements.first = val
+      t = Rexle::Text.new(val)
+      @child_elements.any? ? @child_elements.first = t : @child_elements << t
     end
 
     alias text= value=
@@ -1063,14 +1066,16 @@ class Rexle
   
   class Text
     
+    attr_accessor :value
+    
     def initialize(value=nil)
-      @value = value
+      @value = value.to_s
     end
     
     def [](*args)          @value[*args]                  end
     def +(s)               @value = Text.new(@value + s)  end    
-    def ==(obj)            @value == obj                  end    
-    def <<(s)              @value << s                    end    
+    def ==(obj)            @value == obj                  end
+    def <<(s)              @value << s                    end
     def each_char(&blk)    @value.each_char(&blk)         end
     def inspect()          @value                         end
     def length()           @value.length                  end
@@ -1288,7 +1293,7 @@ class Rexle
 
     return Rexle::CData.new(children.first) if name == '!['
 
-    element = Rexle::Element.new(name, attributes, self)  
+    element = Rexle::Element.new(name, attributes: attributes, rexle: self)  
 
     if children then
 

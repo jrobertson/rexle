@@ -15,6 +15,8 @@ require 'cgi'
 #              bug fix: Within Rexle::Element#text() when an xpath is passed 
 #              in, the text method will only be called if an element is found.
 #              Rexle::Text can now be passed a Range
+#              Rexle::Text now suppoerts the String related methods :scan, 
+#                 :split, :each_char
 # 02-Jan-2015: Text values are now represented as Rexle::Text elements.
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
@@ -1069,11 +1071,14 @@ class Rexle
     def +(s)               @value = Text.new(@value + s)  end    
     def ==(obj)            @value == obj                  end    
     def <<(s)              @value << s                    end    
+    def each_char(&blk)    @value.each_char(&blk)         end
     def inspect()          @value                         end
     def length()           @value.length                  end
     def gsub(*args,&blk)   @value.sub *args, &blk         end
-    def gsub!(*args,&blk)  @value.sub! *args, &blk        end              
+    def gsub!(*args,&blk)  @value.sub! *args, &blk        end
     def match(regex)       @value.match(regex)            end
+    def split(*args)       @value.split(*args)            end
+    def scan(*args,&blk)   @value.scan *args, &blk        end
     def sub(*args,&blk)    @value.sub *args, &blk         end
     def sub!(*args,&blk)   @value.sub! *args, &blk        end        
     def to_s()             @value                         end
