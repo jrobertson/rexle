@@ -1066,7 +1066,7 @@ class Rexle
     def ==(obj)            @value == obj                  end    
     def <<(s)              @value << s                    end    
     def inspect()          @value                         end
-    def length             @value.length                  end
+    def length()           @value.length                  end
     def gsub(*args,&blk)   @value.sub *args, &blk         end
     def gsub!(*args,&blk)  @value.sub! *args, &blk        end              
     def sub(*args,&blk)    @value.sub *args, &blk         end
