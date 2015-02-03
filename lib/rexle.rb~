@@ -12,6 +12,8 @@ require 'cgi'
 # modifications:
 
 # 03-Jan-2015: Rexle::Text now behaves like a String
+#              bug fix: Within Rexle::Element#text() when an xpath is passed 
+#              in, the text method will only be called if an element is found.
 # 02-Jan-2015: Text values are now represented as Rexle::Text elements.
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
@@ -326,7 +328,7 @@ class Rexle
       @name, @attributes = name.to_s, attributes
 
       raise "Element name must not be blank" unless name
-      @child_elements = [Rexle::Text.new]
+      @child_elements = []
 
     end
     
@@ -805,7 +807,8 @@ class Rexle
     def text(s='')      
       
       return @child_elements.first if s.empty?
-      e = self.element(s).text
+      e = self.element(s)
+      e.text if e
     end
     
     def texts()
@@ -1061,7 +1064,7 @@ class Rexle
       @value = value
     end
     
-    def [](obj)            @value[obj]                    end
+    def [](obj,i=nil)      @value[obj,i]                  end
     def +(s)               @value = Text.new(@value + s)  end    
     def ==(obj)            @value == obj                  end    
     def <<(s)              @value << s                    end    
@@ -1069,6 +1072,7 @@ class Rexle
     def length()           @value.length                  end
     def gsub(*args,&blk)   @value.sub *args, &blk         end
     def gsub!(*args,&blk)  @value.sub! *args, &blk        end              
+    def match(regex)       @value.match(regex)            end
     def sub(*args,&blk)    @value.sub *args, &blk         end
     def sub!(*args,&blk)   @value.sub! *args, &blk        end        
     def to_s()             @value                         end
