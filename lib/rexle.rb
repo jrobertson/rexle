@@ -11,6 +11,7 @@ require 'cgi'
 
 # modifications:
 
+# 03-Jan-2015: Rexle::Text now behaves like a String
 # 02-Jan-2015: Text values are now represented as Rexle::Text elements.
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
@@ -228,7 +229,7 @@ module XMLhelper
         tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
         start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
         
-        if (x.value and x.value.to_s.length > 0) \
+        if (x.value and x.value.length > 0) \
             or (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or x.name == 'script'  then
 
@@ -313,7 +314,6 @@ class Rexle
     include XMLhelper
     
     attr_accessor :name, :value, :parent
-    #jr010215 attr_reader :child_lookup, :child_elements, :doc_id, :instructions
     attr_reader :child_elements, :doc_id, :instructions
     
     alias original_clone clone
@@ -322,12 +322,12 @@ class Rexle
 
       @rexle = rexle      
       super()
-      #@name, @value, @attributes = name.to_s, value, attributes
+
       @name, @attributes = name.to_s, attributes
 
       raise "Element name must not be blank" unless name
-      @child_elements = []
-      #@child_lookup = []
+      @child_elements = [Rexle::Text.new]
+
     end
     
     def cdata?()
@@ -578,7 +578,6 @@ class Rexle
               end
             end
 
-            #jr010215 return_elements = ne.map {|x| [@child_lookup[x], x] if x}
             return_elements = ne.map {|x| [@child_elements[x], x] if x}
           end
         else
@@ -658,13 +657,12 @@ class Rexle
         @child_elements << item        
       elsif item.is_a? Rexle::Element then
 
-        #jr010215  @child_lookup << [item.name, item.attributes, item.value]
         @child_elements << item
         # add a reference from this element (the parent) to the child
         item.parent = self
         item        
       elsif item.is_a? String then
-        #jr010215 @child_lookup << item
+
         @child_elements << item             
       elsif item.is_a? Rexle then
         self.add_element(item.root)
@@ -806,7 +804,7 @@ class Rexle
 
     def text(s='')      
       
-      return @child_elements.first.to_s if s.empty?
+      return @child_elements.first if s.empty?
       e = self.element(s).text
     end
     
@@ -818,9 +816,8 @@ class Rexle
     end
 
     def value()
-      #@value.to_s
-      @child_elements.first if @child_elements.any?
-
+      
+      @child_elements.first
     end
         
     def value=(raw_s)
@@ -840,8 +837,7 @@ class Rexle
       end
 =end      
       
-      @child_elements.any? ? @child_elements.first = val : \
-                                       @child_elements << Rexle::Text.new(val)
+      @child_elements.first = val
     end
 
     alias text= value=
@@ -939,13 +935,13 @@ class Rexle
                   if x[0][/@\w+$/] then
                     "r = e.xpath('#{path}').first; r and r == #{value}"
                   else
-                    "r = e.xpath('#{path}').first; r and r.value.to_s == #{value}"
+                    "r = e.xpath('#{path}').first; r and r.value == #{value}"
                   end
                 else
-                  "(name == '%s' and value.to_s %s '%s')" % [x[0], x[1], x[2].sub(/^['"](.*)['"]$/,'\1')]
+                  "(name == '%s' and value %s '%s')" % [x[0], x[1], x[2].sub(/^['"](.*)['"]$/,'\1')]
                 end
               else
-                "e.value.to_s %s %s" % [x[1], x[2]]
+                "e.value %s %s" % [x[1], x[2]]
               end
             else
               x
@@ -1061,22 +1057,27 @@ class Rexle
   
   class Text
     
-    def initialize(value)
+    def initialize(value=nil)
       @value = value
     end
     
-    def inspect()
-      @value
-    end
-     
+    def [](obj)            @value[obj]                    end
+    def +(s)               @value = Text.new(@value + s)  end    
+    def ==(obj)            @value == obj                  end    
+    def <<(s)              @value << s                    end    
+    def inspect()          @value                         end
+    def length             @value.length                  end
+    def gsub(*args,&blk)   @value.sub *args, &blk         end
+    def gsub!(*args,&blk)  @value.sub! *args, &blk        end              
+    def sub(*args,&blk)    @value.sub *args, &blk         end
+    def sub!(*args,&blk)   @value.sub! *args, &blk        end        
+    def to_s()             @value                         end
+    def to_sym()           @value.to_sym                  end
+      
     def unescape()
       s = @value.clone
       %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
       s
-    end
-    
-    def to_s()
-      @value
     end
 
   end
