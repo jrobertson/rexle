@@ -11,13 +11,7 @@ require 'cgi'
 
 # modifications:
 
-# 03-Jan-2015: Rexle::Text now behaves like a String
-#              bug fix: Within Rexle::Element#text() when an xpath is passed 
-#              in, the text method will only be called if an element is found.
-#              Rexle::Text can now be passed a Range
-#              Rexle::Text now suppoerts the String related methods :scan, 
-#                 :split, :each_char
-# 02-Jan-2015: Text values are now represented as Rexle::Text elements.
+# 03-Feb-2015: feature: Rexle::Element#text now includes the unescape method
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
 # 29-Jan-2015: Removed code references to REXML, as it was no longer needed.
@@ -187,7 +181,7 @@ module XMLhelper
           out = ["<%s/>" % tag]
         end
       
-      elsif x.is_a? Rexle::Text then  x
+      elsif x.is_a? String then  x
       elsif x.is_a? Rexle::CData then x.print        
       elsif x.is_a? Rexle::Comment then x.print        
         
@@ -250,7 +244,7 @@ module XMLhelper
         end
 
 
-      elsif x.is_a? Rexle::Text then  x.to_s.sub(/^[\n\s]+$/,'')
+      elsif x.is_a? String then  x.sub(/^[\n\s]+$/,'')
       elsif x.is_a? Rexle::CData then x.print        
       elsif x.is_a? Rexle::Comment then x.print           
       end
@@ -323,7 +317,7 @@ class Rexle
     
     alias original_clone clone
 
-    def initialize(name=nil, attributes={}, rexle=nil)
+    def initialize(name=nil, value: nil, attributes: {}, rexle: nil)
 
       @rexle = rexle      
       super()
@@ -332,6 +326,7 @@ class Rexle
 
       raise "Element name must not be blank" unless name
       @child_elements = []
+      self.add_text value if value
 
     end
     
@@ -428,7 +423,7 @@ class Rexle
               rs.any?{|x| x == true or x == false} ? rs : rs.uniq(&:object_id) 
             end
           }, 
-         :"Rexle::Text" =>  proc {|x| x},
+         String: proc {|x| x},
           Hash: proc {|x| x},
           TrueClass: proc{|x| x},
           FalseClass: proc{|x| x},
@@ -623,7 +618,7 @@ class Rexle
               rtn_element
             elsif rtn_element.is_a? Array then
               rtn_element
-            elsif (rtn_element.is_a? Rexle::Text) || (rtn_element.is_a?(Array) and not(rtn_element[0].is_a? Rexle::Text))
+            elsif (rtn_element.is_a? String) || (rtn_element.is_a?(Array) and not(rtn_element[0].is_a? String))
               rtn_element
             elsif rtn_element.is_a? Rexle::Element
               rtn_element
@@ -655,7 +650,7 @@ class Rexle
 
     def add_element(item)
 
-      if item.is_a? Rexle::Text then
+      if item.is_a? String then
         @child_elements << item
 
       elsif item.is_a? Rexle::CData then
@@ -666,9 +661,7 @@ class Rexle
         # add a reference from this element (the parent) to the child
         item.parent = self
         item        
-      elsif item.is_a? String then
-
-        @child_elements << item             
+          
       elsif item.is_a? Rexle then
         self.add_element(item.root)
       end
@@ -719,7 +712,7 @@ class Rexle
     end
 
     def add_text(s)
-      self.value = (self.value || '') + s
+      self.value = (self.value || '') + s.to_s
       self 
     end
     
@@ -759,7 +752,7 @@ class Rexle
     def deep_clone() Rexle.new(self.xml).root end
       
     def clone() 
-      Element.new(@name, @attributes) 
+      Element.new(@name, attributes: @attributes) 
     end
           
     def delete(obj=nil)
@@ -816,14 +809,32 @@ class Rexle
     
     def texts()
 
-     @child_elements.select do |x|
+     r = @child_elements.select do |x|
         x.respond_to? :to_s
       end
+      
+      r.map do |x|
+        def x.unescape()
+          s = self.clone
+          %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
+          s
+        end            
+      end
+      
+      return r
     end
 
     def value()
       
-      @child_elements.first
+      r = @child_elements.first
+      
+      def r.unescape()
+        s = self.clone
+        %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
+        s
+      end     
+      
+      return r
     end
         
     def value=(raw_s)
@@ -842,8 +853,8 @@ class Rexle
         self.parent.instance_variable_set(:@child_lookup, a)
       end
 =end      
-      
-      @child_elements.first = val
+      t = val
+      @child_elements.any? ? @child_elements.first = t : @child_elements << t
     end
 
     alias text= value=
@@ -1061,36 +1072,6 @@ class Rexle
         
   end # -- end of element --
   
-  class Text
-    
-    def initialize(value=nil)
-      @value = value
-    end
-    
-    def [](*args)          @value[*args]                  end
-    def +(s)               @value = Text.new(@value + s)  end    
-    def ==(obj)            @value == obj                  end    
-    def <<(s)              @value << s                    end    
-    def each_char(&blk)    @value.each_char(&blk)         end
-    def inspect()          @value                         end
-    def length()           @value.length                  end
-    def gsub(*args,&blk)   @value.sub *args, &blk         end
-    def gsub!(*args,&blk)  @value.sub! *args, &blk        end
-    def match(regex)       @value.match(regex)            end
-    def split(*args)       @value.split(*args)            end
-    def scan(*args,&blk)   @value.scan *args, &blk        end
-    def sub(*args,&blk)    @value.sub *args, &blk         end
-    def sub!(*args,&blk)   @value.sub! *args, &blk        end        
-    def to_s()             @value                         end
-    def to_sym()           @value.to_sym                  end
-      
-    def unescape()
-      s = @value.clone
-      %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
-      s
-    end
-
-  end
 
   class CData
     
@@ -1288,7 +1269,7 @@ class Rexle
 
     return Rexle::CData.new(children.first) if name == '!['
 
-    element = Rexle::Element.new(name, attributes, self)  
+    element = Rexle::Element.new(name, attributes: attributes, rexle: self)  
 
     if children then
 
@@ -1300,7 +1281,7 @@ class Rexle
 
           e = if x.is_a? String then
 
-            Rexle::Text.new(x)          
+            x
           elsif x.name == '![' then
 
             Rexle::CData.new(x)
