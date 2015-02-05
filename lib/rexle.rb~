@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 04-Feb-2015: An xpath containing text() now calls texts() to 
+#              return all strings within that element
 # 03-Feb-2015: feature: Rexle::Element#text now includes the unescape method
 # 30-Jan-2015: Rexle::Element#texts now returns the values of 
 #                CData elements as well as strings
@@ -197,6 +199,7 @@ module XMLhelper
       if x.is_a? Rexle::Element then
 
         a = [x.name, x.attributes, x.value]
+
         (a.concat(scan_to_a(x.children))) if x.children.length > 1
         r << a
       elsif x.is_a? String then
@@ -211,8 +214,8 @@ module XMLhelper
 
 
   def pretty_print(nodes, indent='0')
-    indent = indent.to_i
 
+    indent = indent.to_i
     return '' unless nodes
 
     nodes.select(){|x| x.to_s.strip.length > 0}
@@ -261,7 +264,7 @@ class Rexle
   attr_accessor :instructions
   
   def initialize(x=nil)
-    
+
     super()
 
     @instructions = [["xml", "version='1.0' encoding='UTF-8'"]] 
@@ -375,7 +378,7 @@ class Rexle
     end
     
     def next_element()      
-      
+
       id  = self.object_id
       a = self.parent.child_elements      
       i = a.index {|x| x.object_id == id} + 1
@@ -408,8 +411,8 @@ class Rexle
     def filter_xpath(path, rlist=[], &blk)
 
       # is it a function
-      fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)$/)
-
+      fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)(?:\[(.*)\])?$/)
+      
       #    Array: proc {|x| x.flatten.compact}, 
       if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
 
@@ -441,7 +444,13 @@ class Rexle
         
       else
 
-        m, xpath_value = fn_match.captures        
+        m, xpath_value, index = fn_match.captures        
+        
+        if m == 'text' then
+          a = texts()
+          return index ? a[index.to_i - 1].to_s : a
+        end
+        
         xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
       end
 
@@ -487,7 +496,7 @@ class Rexle
 
         a_path.shift
         #return @value
-        return self.value
+        return self.texts
       else
 
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
@@ -641,7 +650,7 @@ class Rexle
           self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
         end
       end
-
+ 
       rlist = rlist.flatten(1) unless not(rlist.is_a? Array) or (rlist.length > 1 and rlist[0].is_a? Array)
       rlist = [rlist] if rlist.is_a? Rexle::Element
       rlist = (rlist.length > 0 ? true : false) if flag_func == true
@@ -801,7 +810,7 @@ class Rexle
     def root() self                                             end 
 
     def text(s='')      
-      
+
       return @child_elements.first if s.empty?
       e = self.element(s)
       e.text if e
@@ -854,7 +863,8 @@ class Rexle
       end
 =end      
       t = val
-      @child_elements.any? ? @child_elements.first = t : @child_elements << t
+
+      @child_elements.any? ? @child_elements[0] = t : @child_elements << t
     end
 
     alias text= value=
@@ -1010,7 +1020,7 @@ class Rexle
 
       x, index = raw_element
       e = @child_elements[index]
-      
+
       return unless e.is_a? Rexle::Element
       name, value = e.name, e.value if e.is_a? Rexle::Element
 
@@ -1063,6 +1073,7 @@ class Rexle
     def recursive_scan(nodes, &blk)
       
       nodes.each do |x|
+
         if x.is_a? Rexle::Element then
           blk.call(x)
           recursive_scan(x.children, &blk) if x.children.length > 0
@@ -1084,7 +1095,7 @@ class Rexle
     end
     
     def inspect()
-      @value
+      @value.inspect
     end
     
     def print()
