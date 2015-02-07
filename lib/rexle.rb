@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 07-Feb-2015: Implemented XPath function last() e.g. 
+#                                       doc.root.xpath('records/item[last()]')
 # 05-Feb=2015: bug fix: 
 #                  Rexle::Element#texts now transforms all items to a String
 # 04-Feb-2015: An xpath containing text() now calls texts() to 
@@ -411,12 +413,17 @@ class Rexle
     end
     
     def filter_xpath(path, rlist=[], &blk)
-
+      
       # is it a function
       fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)(?:\[(.*)\])?$/)
+      end_fn_match = path.slice!(/\[\w+\(\)\]$/)
       
-      #    Array: proc {|x| x.flatten.compact}, 
-      if (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
+      if end_fn_match then
+        
+        m = end_fn_match[1..-4]
+        [method(m.to_sym).call(xpath path)]
+      
+      elsif (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
 
         procs = {
           #jr061012 Array: proc {|x| block_given? ? x : x.flatten.uniq },
@@ -442,7 +449,7 @@ class Rexle
 
         results = raw_results
 
-        procs[results.class.to_s.to_sym].call(results) if results
+        procs[results.class.to_s.to_sym].call(results) if results              
         
       else
 
@@ -808,6 +815,7 @@ class Rexle
     def has_elements?() !self.elements.empty?                   end    
     def insert_after(node)   insert(node, 1)                    end          
     def insert_before(node)  insert(node)                       end
+    def last(a) a.last                                          end
     def map(&blk)    self.children.map(&blk)                    end        
     def root() self                                             end 
 

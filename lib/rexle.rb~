@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 05-Feb=2015: bug fix: 
+#                  Rexle::Element#texts now transforms all items to a String
 # 04-Feb-2015: An xpath containing text() now calls texts() to 
 #              return all strings within that element
 # 03-Feb-2015: feature: Rexle::Element#text now includes the unescape method
@@ -824,7 +826,7 @@ class Rexle
       
       r.map do |x|
         def x.unescape()
-          s = self.clone
+          s = self.to_s.clone
           %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
           s
         end            
