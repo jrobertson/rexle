@@ -11,6 +11,10 @@ require 'cgi'
 
 # modifications:
 
+# 08-Feb-2015: bug fix: Within method filter_xpath(), a new String is created 
+#            from raw_path to workaround a frozen string when slice! is called.
+#              bug fix: A Rexle::Element#value will now only return an 
+#                object if the 1st child item is a String
 # 07-Feb-2015: Implemented XPath function last() e.g. 
 #                                       doc.root.xpath('records/item[last()]')
 # 05-Feb=2015: bug fix: 
@@ -238,7 +242,7 @@ module XMLhelper
         if (x.value and x.value.length > 0) \
             or (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or x.name == 'script'  then
-
+                    
           ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
             ("\n" + '  ' * indent) : ''
             
@@ -412,8 +416,10 @@ class Rexle
       r.is_a?(Array) ? r.compact : r      
     end
     
-    def filter_xpath(path, rlist=[], &blk)
+    def filter_xpath(raw_path, rlist=[], &blk)
       
+      path = String.new raw_path
+
       # is it a function
       fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)(?:\[(.*)\])?$/)
       end_fn_match = path.slice!(/\[\w+\(\)\]$/)
@@ -846,6 +852,7 @@ class Rexle
     def value()
       
       r = @child_elements.first
+      return nil unless r.is_a? String
       
       def r.unescape()
         s = self.clone
