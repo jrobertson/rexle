@@ -15,6 +15,7 @@ require 'cgi'
 #            from raw_path to workaround a frozen string when slice! is called.
 #              bug fix: A Rexle::Element#value will now only return an 
 #                object if the 1st child item is a String
+#              Now stores any comment elements as well as printing them.
 # 07-Feb-2015: Implemented XPath function last() e.g. 
 #                                       doc.root.xpath('records/item[last()]')
 # 05-Feb=2015: bug fix: 
@@ -287,7 +288,6 @@ class Rexle
       
       doc_node = ['doc',{}]
   
-
       @a = procs[x.class.to_s.to_sym].call(x)
       @doc = scan_element(*(doc_node << @a))
       
@@ -678,7 +678,9 @@ class Rexle
         @child_elements << item
 
       elsif item.is_a? Rexle::CData then
-        @child_elements << item        
+        @child_elements << item
+      elsif item.is_a? Rexle::Comment then
+        @child_elements << item                
       elsif item.is_a? Rexle::Element then
 
         @child_elements << item
@@ -1296,6 +1298,7 @@ class Rexle
   def scan_element(name, attributes=nil, *children)
 
     return Rexle::CData.new(children.first) if name == '!['
+    return Rexle::Comment.new(children.first) if name == '!-'
 
     element = Rexle::Element.new(name, attributes: attributes, rexle: self)  
 
@@ -1313,6 +1316,11 @@ class Rexle
           elsif x.name == '![' then
 
             Rexle::CData.new(x)
+            
+          elsif x.name == '!-' then
+
+            Rexle::Comment.new(x)
+            
           end
 
           element.add_element e
