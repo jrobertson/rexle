@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
+#                       All references to @child_lookup have now been removed.
 # 08-Feb-2015: bug fix: Within method filter_xpath(), a new String is created 
 #            from raw_path to workaround a frozen string when slice! is called.
 #              bug fix: A Rexle::Element#value will now only return an 
@@ -185,7 +187,6 @@ module XMLhelper
             and not x.children.is_an_empty_string?) or x.name == 'script' then
 
           out = ["<%s>" % tag]
-          #out << x.value unless x.value.nil? || x.value.empty?
           out << scan_print(x.children)
           out << "</%s>" % x.name
         else
@@ -232,7 +233,6 @@ module XMLhelper
 
       if x.is_a? Rexle::Element then
         
-        #return ["<%s/>" % x.name] if x.value = ''
         a = x.attributes.to_a.map do |k,v| 
           "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
         end
@@ -432,7 +432,7 @@ class Rexle
       elsif (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
 
         procs = {
-          #jr061012 Array: proc {|x| block_given? ? x : x.flatten.uniq },
+
           Array: proc { |x| 
             if block_given? then 
               x.flatten(1) 
@@ -633,7 +633,6 @@ class Rexle
               r = e.xpath(a_path.join('/') + raw_condition.to_s \
                     + remaining_path, &blk)
               r
-              #(r || e) 
             end
 
             next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
@@ -721,8 +720,6 @@ class Rexle
         self.xml
       end  
     end
-    
-    #alias add add_element
 
     def add_attribute(*x)
 
@@ -738,7 +735,8 @@ class Rexle
     end
 
     def add_text(s)
-      self.value = (self.value || '') + s.to_s
+
+      self.child_elements << s
       self 
     end
     
@@ -761,17 +759,14 @@ class Rexle
       
     def children()
 
-      #return unless @value
-      #r = (@value.to_s.empty? ? [] : [@value])  + @child_elements
       r =  @child_elements
+      
       def r.is_an_empty_string?()
         self.length == 1 and self.first == ''
       end      
       
       return r
     end 
-
-    #alias child_elements children
 
     def children=(a)   @child_elements = a if a.is_a? Array  end
     
@@ -790,7 +785,6 @@ class Rexle
           e.delete if e
         else
 
-          #jr010215 [@child_elements, @child_lookup].each{|x| x.delete_at i} if i
           i = @child_elements.index(obj)
           [@child_elements].each{|x| x.delete_at i} if i          
         end
@@ -837,7 +831,7 @@ class Rexle
     def texts()
 
      r = @child_elements.select do |x|
-        x.respond_to? :to_s
+        x.is_a? String or x.is_a? Rexle::CData
       end
       
       r.map do |x|
@@ -867,20 +861,11 @@ class Rexle
         
     def value=(raw_s)
 
-      #@value = String.new(raw_s.to_s.clone)
       val = String.new(raw_s.to_s.clone)
       
       escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
       escape_chars.each{|x| val.gsub!(*x)}
-=begin
-      a = self.parent.instance_variable_get(:@child_lookup)
-      
-      if a then
-        i = a.index(a.assoc(@name))      
-        a[i][-1] = val
-        self.parent.instance_variable_set(:@child_lookup, a)
-      end
-=end      
+
       t = val
 
       @child_elements.any? ? @child_elements[0] = t : @child_elements << t
@@ -921,7 +906,6 @@ class Rexle
       return unless i
 
       parent.child_elements.insert(i+offset, node)
-      parent.child_lookup.insert(i+offset, [node.name, node.attributes, node.value])          
 
       @doc_id = self.doc_root.object_id
       node.instance_variable_set(:@doc_id, self.doc_root.object_id)
