@@ -9,7 +9,6 @@ require 'rexle-css'
 require 'cgi'
 
 
-#              now treated as a type of CSS selector storage area
 # modifications:
 
 # 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
