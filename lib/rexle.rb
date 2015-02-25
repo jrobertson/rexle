@@ -13,6 +13,8 @@ require 'cgi'
 
 # 25-Feb-2015: feature: Rexle#inspect now displays the 
 #                       1st 100 characters of XML
+#              bug fix: Method parse_String modified to escape the 
+#                       text being added to a text element
 # 16-Feb-2015: bug fix: Rexle::Element#value assignment is now made by 
 #                       value instead of reference
 # 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
@@ -1307,14 +1309,19 @@ class Rexle
     if children then
 
       children.each do |x|
+        
         if x.is_a? Array then
 
           element.add_element scan_element(*x)        
+          
         elsif x.is_a? String then
 
           e = if x.is_a? String then
 
+            escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
+            escape_chars.each{|y| x.gsub!(*y)}
             x
+            
           elsif x.name == '![' then
 
             Rexle::CData.new(x)

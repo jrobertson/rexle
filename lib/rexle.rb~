@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 25-Feb-2015: feature: Rexle#inspect now displays the 
+#                       1st 100 characters of XML
 # 16-Feb-2015: bug fix: Rexle::Element#value assignment is now made by 
 #                       value instead of reference
 # 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
@@ -165,6 +167,13 @@ module XMLhelper
     else 
       xml
     end
+  end
+  
+  def inspect()
+    
+    xml = self.xml declaration: false
+    "#<Rexle:%s xml=\"%s\">" % \
+                 [self.object_id, xml.length > 100 ? xml[0..96] + '...>' : xml]
   end
 
   def processing_instructions(s='')
