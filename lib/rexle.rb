@@ -13,8 +13,8 @@ require 'cgi'
 
 # 25-Feb-2015: feature: Rexle#inspect now displays the 
 #                       1st 100 characters of XML
-#              bug fix: Method parse_String modified to escape the 
-#                       text being added to a text element
+#              bug fix: If another parser can't be selected, the 
+#                       default parser is used
 # 16-Feb-2015: bug fix: Rexle::Element#value assignment is now made by 
 #                       value instead of reference
 # 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
@@ -171,11 +171,8 @@ module XMLhelper
     end
   end
   
-  def inspect()
-    
-    xml = self.xml declaration: false
-    "#<Rexle:%s xml=\"%s\">" % \
-                 [self.object_id, xml.length > 100 ? xml[0..96] + '...>' : xml]
+  def inspect()    
+    "#<Rexle:%s>" % [self.object_id]
   end
 
   def processing_instructions(s='')
@@ -1265,6 +1262,15 @@ class Rexle
 
   private
 
+  def parse_rexle(x)
+    
+    rp = RexleParser.new(x)
+    a = rp.to_a
+
+    @instructions = rp.instructions
+    return a              
+  end
+  
   def parse_string(x)
 
     # check if the XML string is a dynarex document
@@ -1278,22 +1284,26 @@ class Rexle
           #'polyrex' => proc {|x| PolyrexParser.new(x).to_a},
           'polyrex' => proc {|x| RexleParser.new(x).to_a}
         }
-        procs[recordx_type].call(x)
+        other_parser = procs[recordx_type]
+        
+        if other_parser then
+          
+          other_parser.call(x)
+          
+        else
+          
+          parse_rexle x
+  
+        end        
         
       else
 
-        rp = RexleParser.new(x)
-        a = rp.to_a
-
-        @instructions = rp.instructions
-        return a
+        parse_rexle x
+        
       end
     else
 
-      rp = RexleParser.new(x)
-      a = rp.to_a
-      @instructions = rp.instructions
-      return a
+      parse_rexle x
   
     end
 
@@ -1309,19 +1319,14 @@ class Rexle
     if children then
 
       children.each do |x|
-        
         if x.is_a? Array then
 
           element.add_element scan_element(*x)        
-          
         elsif x.is_a? String then
 
           e = if x.is_a? String then
 
-            escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
-            escape_chars.each{|y| x.gsub!(*y)}
             x
-            
           elsif x.name == '![' then
 
             Rexle::CData.new(x)
