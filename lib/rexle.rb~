@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 16-Feb-2015: bug fix: Rexle::Element#value assignment is now made by 
+#                       value instead of reference
 # 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
 #                       All references to @child_lookup have now been removed.
 # 08-Feb-2015: bug fix: Within method filter_xpath(), a new String is created 
@@ -129,11 +131,11 @@ require 'cgi'
 module XMLhelper
 
   def doc_print(children, declaration=true)
-    
+
     body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
 
     a = self.root.attributes.to_a.map do |k,v|
-      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
+      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v.to_s)]
     end
 
     xml = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : \
@@ -176,7 +178,7 @@ module XMLhelper
     nodes.map do |x|
 
       if x.is_a? Rexle::Element then
-        
+
         a = x.attributes.to_a.map do |k,v| 
           "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
         end
@@ -232,18 +234,19 @@ module XMLhelper
         .map.with_index do |x, i|
 
       if x.is_a? Rexle::Element then
-        
+
         a = x.attributes.to_a.map do |k,v| 
           "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
         end
-        a ||= [] 
+        a ||= []
+
         tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
         start = i > 0 ? ("\n" + '  ' * (indent - 1)) : ''          
-        
+
         if (x.value and x.value.length > 0) \
             or (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or x.name == 'script'  then
-                    
+
           ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
             ("\n" + '  ' * indent) : ''
             
@@ -252,6 +255,7 @@ module XMLhelper
           ind2 = (ind1 and ind1.length > 0) ? ("\n" + '  ' * (indent - 1)) : ''
           out << "%s</%s>" % [ind2, x.name]            
         else
+
           out = ["%s<%s/>" % [start, tag]]
         end
 
@@ -259,6 +263,7 @@ module XMLhelper
       elsif x.is_a? String then  x.sub(/^[\n\s]+$/,'')
       elsif x.is_a? Rexle::CData then x.print        
       elsif x.is_a? Rexle::Comment then x.print           
+
       end
     end
 
@@ -289,7 +294,9 @@ class Rexle
       doc_node = ['doc',{}]
   
       @a = procs[x.class.to_s.to_sym].call(x)
+      #@log.debug 'rexle: before scan_element a: ' + @a.inspect
       @doc = scan_element(*(doc_node << @a))
+      #@log.debug 'rexle: after scan_element' + self.to_a.inspect
       
       # fetch the namespaces
       @prefixes = []
@@ -647,7 +654,6 @@ class Rexle
               rtn_element
             end
           end
-          #
 
           rlist = rlist.flatten(1) unless rlist.length > 1 and rlist[0].is_a? Array
 
@@ -674,7 +680,7 @@ class Rexle
     def add_element(item)
 
       if item.is_a? String then
-        @child_elements << item
+        @child_elements << String.new(item)
 
       elsif item.is_a? Rexle::CData then
         @child_elements << item
@@ -846,7 +852,7 @@ class Rexle
     end
 
     def value()
-      
+
       r = @child_elements.first
       return nil unless r.is_a? String
       
@@ -882,6 +888,7 @@ class Rexle
         Hash: lambda {|x|
           o = {pretty: false}.merge(x)
           msg = o[:pretty] == false ? :doc_print : :doc_pretty_print
+         
           method(msg).call(self.children)
         },
         String: lambda {|x| 
@@ -1214,7 +1221,9 @@ class Rexle
   end
   
   def text(xpath) @doc.text(xpath) end
-  def root() @doc.elements.first end
+  def root() 
+    @doc.elements.first 
+  end
 
   def write(f) 
     f.write xml 
