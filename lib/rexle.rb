@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 01-Mar-2015: Rexle::Element#text now reuses the code from 
+#                                                Rexle::Element#value
 # 25-Feb-2015: feature: Rexle#inspect now displays the 
 #                       1st 100 characters of XML
 #              bug fix: If another parser can't be selected, the 
@@ -835,9 +837,10 @@ class Rexle
     def map(&blk)    self.children.map(&blk)                    end        
     def root() self                                             end 
 
-    def text(s='')      
-
-      return @child_elements.first if s.empty?
+    def text(s='')
+      
+      return self.value if s.empty? 
+      
       e = self.element(s)
       e.text if e
     end
