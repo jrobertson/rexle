@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 08-Mar-2015: feature: Within Rexle:Elements, 
+#                                     implemented methods length() and empty?()
 # 01-Mar-2015: Rexle::Element#text now reuses the code from 
 #                                                Rexle::Element#value
 # 25-Feb-2015: feature: Rexle#inspect now displays the 
@@ -1167,6 +1169,8 @@ class Rexle
     end
     
     def each(&blk) @elements.each(&blk)  end
+    def empty?()   @elements.empty?      end
+    def length()   @elements.length      end
     def to_a()     @elements             end
       
   end # -- end of elements --
