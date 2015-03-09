@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 09-Mar-2015: feature: Rexle::Element#attributes now returns object 
+#                                                    Attributes instead of Hash
 # 08-Mar-2015: feature: Within Rexle:Elements, 
 #                                     implemented methods length() and empty?()
 # 01-Mar-2015: Rexle::Element#text now reuses the code from 
@@ -135,6 +137,8 @@ require 'cgi'
 # 14-Jan-2012: Implemented Rexle::Elements#each
 # 21-Dec-2011: Bug fix: xpath modified to allow querying from the actual 
 # root rather than the 1st child element from the root
+
+
 
 module XMLhelper
 
@@ -303,7 +307,7 @@ class Rexle
         Array: proc {|x| x}
       }
       
-      doc_node = ['doc',{}]
+      doc_node = ['doc',Attributes.new]
   
       @a = procs[x.class.to_s.to_sym].call(x)
       #@log.debug 'rexle: before scan_element a: ' + @a.inspect
@@ -347,7 +351,7 @@ class Rexle
     
     alias original_clone clone
 
-    def initialize(name=nil, value: nil, attributes: {}, rexle: nil)
+    def initialize(name=nil, value: nil, attributes: Attributes.new, rexle: nil)
 
       @rexle = rexle      
       super()
@@ -1190,7 +1194,7 @@ class Rexle
       a = yield
     end
     
-    doc_node = ['doc',{}]
+    doc_node = ['doc',Attributes.new]
     @a = procs[x.class.to_s.to_sym].call(x)
     @doc = scan_element(*(doc_node << @a))
     
@@ -1207,7 +1211,7 @@ class Rexle
       raise 'attempted adding second root element to document' if @doc.root
       @doc.root.add_element(element) 
     else
-      doc_node = ['doc', {}, element.to_a]  
+      doc_node = ['doc', Attributes.new, element.to_a]  
       @doc = scan_element(*doc_node)      
     end
     element
