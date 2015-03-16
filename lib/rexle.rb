@@ -11,6 +11,7 @@ require 'cgi'
 
 # modifications:
 
+# 16-Mar-2015: feature: Implemented Rexle::Element#prepend
 # 09-Mar-2015: feature: Rexle::Element#attributes now returns object 
 #                                                    Attributes instead of Hash
 # 08-Mar-2015: feature: Within Rexle:Elements, 
@@ -920,6 +921,15 @@ class Rexle
       CGI.unescapeHTML(xml(options))
     end
 
+    def prepend(item)
+      
+      @child_elements.unshift item
+      
+      # add a reference from this element (the parent) to the child
+      item.parent = self
+      item              
+    end    
+    
     alias to_s xml
 
     private
@@ -1008,7 +1018,6 @@ class Rexle
 
 
     end
-
     
     def scan_match(node, path)
 
