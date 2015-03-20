@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 20-Mar-2015: bug fix: Dynarex documents which fail to parse properly with the
+#                          Dynarex parser are now parsed by by the Rexle parser
 # 16-Mar-2015: feature: Implemented Rexle::Element#prepend
 # 09-Mar-2015: feature: Rexle::Element#attributes now returns object 
 #                                                    Attributes instead of Hash
@@ -1308,7 +1310,11 @@ class Rexle
         
         if other_parser then
           
-          other_parser.call(x)
+          begin
+            other_parser.call(x)
+          rescue
+            parse_rexle x
+          end
           
         else
           
