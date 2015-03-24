@@ -11,6 +11,9 @@ require 'cgi'
 
 # modifications:
 
+# 24-Mar-2015: bug fix: Rexle::Elements no longer allows indexes less than 1
+# 20-Mar-2015: bug fix: Dynarex documents which fail to parse properly with the
+#                          Dynarex parser are now parsed by by the Rexle parser
 # 16-Mar-2015: feature: Implemented Rexle::Element#prepend
 # 09-Mar-2015: feature: Rexle::Element#attributes now returns object 
 #                                                    Attributes instead of Hash
@@ -227,13 +230,13 @@ module XMLhelper
 
       if x.is_a? Rexle::Element then
 
-        a = [x.name, x.attributes, x.value]
+        a = Array.new(String.new(x.name), Hash.new(x.attributes), String.new(x.value))
 
         (a.concat(scan_to_a(x.children))) if x.children.length > 1
         r << a
       elsif x.is_a? String then
 
-        r << x
+        r << String.new(x)
       end
 
     end
@@ -898,7 +901,8 @@ class Rexle
     alias text= value=
         
     def to_a()
-      [self.name, self.attributes, self.value, *scan_to_a(self.children)]
+      e = Array.new(String.new(self.name), Hash.new(self.attributes), String.new(self.value))
+      Array.new(*e, *scan_to_a(self.children))
     end
 
     def xml(options={})
@@ -1177,8 +1181,11 @@ class Rexle
       @elements = elements
     end
 
-    def [](i)
-      @elements[i-1]
+    def [](raw_i)
+
+      raise 'Rexle::Elements index (-1) must be >= 1' unless raw_i > 0
+      i = raw_i - 1
+      @elements[i]
     end
     
     def each(&blk) @elements.each(&blk)  end
@@ -1308,7 +1315,11 @@ class Rexle
         
         if other_parser then
           
-          other_parser.call(x)
+          begin
+            other_parser.call(x)
+          rescue
+            parse_rexle x
+          end
           
         else
           
