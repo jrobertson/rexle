@@ -13,6 +13,8 @@ require 'cgi'
 
 # 30-Apr-2015: improvement: Rexle::Element#xpath function contains() can 
 #                           now handle string values
+#              feature: Implemented Rexle::Element#backtrack which 
+#                         uses the Backtrack-xpath gem
 # 24-Mar-2015: bug fix: Rexle::Elements no longer allows indexes less than 1
 # 20-Mar-2015: bug fix: Dynarex documents which fail to parse properly with the
 #                          Dynarex parser are now parsed by by the Rexle parser
@@ -366,6 +368,10 @@ class Rexle
       @child_elements = []
       self.add_text value if value
 
+    end
+    
+    def backtrack()
+      BacktrackXPath.new(self).to_s
     end
     
     def cdata?()

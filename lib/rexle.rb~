@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 30-Apr-2015: improvement: Rexle::Element#xpath function contains() can 
+#                           now handle string values
 # 24-Mar-2015: bug fix: Rexle::Elements no longer allows indexes less than 1
 # 20-Mar-2015: bug fix: Dynarex documents which fail to parse properly with the
 #                          Dynarex parser are now parsed by by the Rexle parser
@@ -304,7 +306,7 @@ class Rexle
     @instructions = [["xml", "version='1.0' encoding='UTF-8'"]] 
     @doctype = :xml
 
-    # what type of input is it? Is it a string, array, or REXML doc?
+    # what type of input is it? Is it a string, array
     if x then
       procs = {
         String: proc {|x| parse_string(x)},
@@ -314,9 +316,7 @@ class Rexle
       doc_node = ['doc',Attributes.new]
   
       @a = procs[x.class.to_s.to_sym].call(x)
-      #@log.debug 'rexle: before scan_element a: ' + @a.inspect
       @doc = scan_element(*(doc_node << @a))
-      #@log.debug 'rexle: after scan_element' + self.to_a.inspect
       
       # fetch the namespaces
       @prefixes = []
@@ -438,7 +438,6 @@ class Rexle
     
     def xpath(path, rlist=[], &blk)
 
-      #return if path[/^(?:preceding|following)-sibling/]
       r = filter_xpath(path, rlist=[], &blk)
       r.is_a?(Array) ? r.compact : r      
     end
@@ -456,7 +455,7 @@ class Rexle
         m = end_fn_match[1..-4]
         [method(m.to_sym).call(xpath path)]
       
-      elsif (fn_match and fn_match.captures.first[/^(attribute|@)/]) or fn_match.nil? then 
+      elsif (fn_match and fn_match.captures.first[/^(attribute|@)/]) 
 
         procs = {
 
@@ -479,33 +478,63 @@ class Rexle
 
           query_xpath(xp.strip, bucket, &blk)         
         end
-
+        
         results = raw_results
 
         procs[results.class.to_s.to_sym].call(results) if results              
         
-      else
-
-        m, xpath_value, index = fn_match.captures        
+      elsif fn_match.nil?
         
+        procs = {
+
+          Array: proc { |x| 
+            if block_given? then 
+              x.flatten(1) 
+            else
+              rs = x.flatten
+              rs.any?{|x| x == true or x == false} ? rs : rs.uniq(&:object_id) 
+            end
+          }, 
+         String: proc {|x| x},
+          Hash: proc {|x| x},
+          TrueClass: proc{|x| x},
+          FalseClass: proc{|x| x},
+          :"Rexle::Element" => proc {|x| [x]}
+        }
+        bucket = []
+        raw_results = path.split('|').map do |xp|
+
+          query_xpath(xp.strip, bucket, &blk)         
+        end
+
+        return [true] if !path[/[><]/] and raw_results.flatten.index(true)
+        results = raw_results # .flatten.select {|x| x}
+        
+        procs[results.class.to_s.to_sym].call(results) if results            
+        
+      else
+        
+        m, xpath_value, index = fn_match.captures        
+
         if m == 'text' then
           a = texts()
           return index ? a[index.to_i - 1].to_s : a
         end
         
-        xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
+        raw_results = xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
+
+        raw_results
+
       end
 
     end    
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
 
-      #remove any pre'fixes
-     #@rexle.prefixes.each {|x| xpath_value.sub!(x + ':','') }
+
       flag_func = false            
 
       xpath_value = raw_xpath_value.sub('child::','./')
-      #xpath_value.sub!(/\.\/(?=[\/])/,'')
 
       if xpath_value[/^[\w\/]+\s*=.*/] then        
         flag_func = true
@@ -513,11 +542,8 @@ class Rexle
         xpath_value.sub!(/^\w+\s*=.*/,'.[\0]')
         xpath_value.sub!(/\/([\w]+\s*=.*)/,'[\1]')
 
-        #result = self.element xpath_value        
-        #return [(result.is_a?(Rexle::Element) ? true : false)]
       end
 
-      #xpath_value.sub!(/^attribute::/,'*/attribute::')
       raw_path, raw_condition = xpath_value.sub(/^\.?\/(?!\/)/,'')\
           .match(/([^\[]+)(\[[^\]]+\])?/).captures 
 
@@ -659,6 +685,9 @@ class Rexle
 
               r = e.xpath(a_path.join('/') + raw_condition.to_s \
                     + remaining_path, &blk)
+
+              r = e if r.is_a?(Array) and r.first and r.first == true and a_path.empty?
+
               r
             end
 
@@ -672,6 +701,8 @@ class Rexle
               rtn_element
             elsif rtn_element.is_a? Rexle::Element
               rtn_element
+            elsif rtn_element  == true
+              true
             end
           end
 
