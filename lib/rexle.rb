@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 02-May-2015: improvement: Rexle::Element#xpath function contains() can 
+#                          now be used as a condition .e.g. b[contains(c,'10')]
 # 30-Apr-2015: improvement: Rexle::Element#xpath function contains() can 
 #                           now handle string values
 #              feature: Implemented Rexle::Element#backtrack which 
@@ -371,7 +373,7 @@ class Rexle
     end
     
     def backtrack()
-      BacktrackXPath.new(self).to_s
+      BacktrackXPath.new(self)
     end
     
     def cdata?()
@@ -379,14 +381,18 @@ class Rexle
     end
 
     def contains(raw_args)
+
       path, raw_val = raw_args.split(',',2)
       val = raw_val.strip[/^["']?.*["']?$/]      
       
       anode = query_xpath(path)
-      return unless anode
+
+      return [false] if anode.nil? or anode.empty?
+
       a = scan_contents(anode.first)
-     
-      [a.grep(/#{val}/).length > 0]
+      r = [a.grep(/#{val.sub(/^["'](.*)["']$/,'\1')}/).length > 0]
+
+      r.any?
     end    
     
     def count(path)
@@ -537,7 +543,6 @@ class Rexle
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
 
-
       flag_func = false            
 
       xpath_value = raw_xpath_value.sub('child::','./')
@@ -555,14 +560,20 @@ class Rexle
 
       remaining_path = ($').to_s
 
+      if remaining_path[/^contains\(/] then
+        raw_condition = raw_condition ? raw_condition + '/' + remaining_path : remaining_path
+        remaining_path = ''        
+      end
+
       r = raw_path[/^([^\/]+)(?=\/\/)/,1] 
+      
       if r then
         a_path = raw_path.split(/(?=\/\/)/,2)
       else
         a_path = raw_path.split('/',2)
       end
       
-      condition = raw_condition if a_path.length <= 1
+      condition = raw_condition if a_path.length <= 1 #and not raw_condition[/^\[\w+\(.*\)\]$/]
 
       if raw_path[0,2] == '//' then
         s = ''
@@ -608,7 +619,7 @@ class Rexle
       #element_name ||= '*'
       raw_condition = '' if condition
 
-      attr_search = format_condition(condition) if condition and condition.length > 0      
+      attr_search = format_condition(condition) if condition and condition.length > 0   
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
 
       if attr_search2 then
@@ -645,12 +656,12 @@ class Rexle
         if ename != '..' then
 
           return_elements = @child_elements.map.with_index.select do |x, i|
-            
+
             next unless x.is_a? Rexle::Element
 
             (x.name == ename || ename == '.') or  (ename == '*')
           end
-          
+
           if selector then
             ne = return_elements.inject([]) do |r,x| 
               i = x.last + selector
@@ -680,7 +691,13 @@ class Rexle
 
         if (a_path + [remaining_path]).join.empty? then
 
-          rlist = return_elements.map.with_index {|x,i| filter(x, i+1, attr_search, &blk)}.compact          
+          # pass in a block to the filter if it is function contains?
+          rlist = return_elements.map.with_index do |x,i| 
+            r5 = filter(x, i+1, attr_search, &blk)
+
+            r5
+          end.compact
+
           rlist = rlist[0] if rlist.length == 1
 
         else
@@ -731,6 +748,7 @@ class Rexle
       rlist = rlist.flatten(1) unless not(rlist.is_a? Array) or (rlist.length > 1 and rlist[0].is_a? Array)
       rlist = [rlist] if rlist.is_a? Rexle::Element
       rlist = (rlist.length > 0 ? true : false) if flag_func == true
+
       rlist
     end
 
@@ -990,13 +1008,17 @@ class Rexle
 
     def format_condition(condition)
 
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|and|or|\d+|[!=<>]+|position\(\)|[@\w\.\/&;]+/)
-
+      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|\
+         and|or|\d+|[!=<>]+|position\(\)|contains\([^\)]+\)|[@\w\.\/&;]+/)
+      
+      
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       elsif raw_items[0] == 'position()' then
         rrr = "i %s %s" % [raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
         return rrr
+      elsif raw_items[0][/^contains\(/]
+        return raw_items[0]
       else
 
         andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten
@@ -1094,7 +1116,7 @@ class Rexle
     
     
     def filter(raw_element, i, attr_search, &blk)
-
+      
       x, index = raw_element
       e = @child_elements[index]
 
@@ -1102,10 +1124,11 @@ class Rexle
       name, value = e.name, e.value if e.is_a? Rexle::Element
 
       h = x.attributes  # <-- fetch the attributes      
-      
+
       if attr_search then
 
-        attribute_search(attr_search,e, h, i, &blk)
+        r6 = attribute_search(attr_search,e, h, i, &blk)
+        r6
       else
 
         block_given? ? blk.call(e) : e
@@ -1140,7 +1163,7 @@ class Rexle
         if eval(attr_search) then
           block_given? ? blk.call(e) : e
         end
-      elsif attr_search[/e\.xpath/] and eval(attr_search)           
+      elsif attr_search[/e\.xpath/] and eval(attr_search)
         block_given? ? blk.call(e) : e
       elsif e.element attr_search then
         block_given? ? blk.call(e) : e
