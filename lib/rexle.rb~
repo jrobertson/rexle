@@ -12,6 +12,7 @@ require 'cgi'
 # modifications:
 
 # 10-May-2015: bug fix: Rexle::Element#to_a now correctly returns an array
+#                       Corrected method scan_to_a() which is used by to_a()
 # 02-May-2015: improvement: Rexle::Element#xpath function contains() can 
 #                          now be used as a condition .e.g. b[contains(c,'10')]
 # 30-Apr-2015: improvement: Rexle::Element#xpath function contains() can 
@@ -155,7 +156,8 @@ module XMLhelper
 
   def doc_print(children, declaration=true)
 
-    body = (children.nil? or children.empty? or children.is_an_empty_string? ) ? '' : scan_print(children).join
+    body = (children.nil? or children.empty? \
+           or children.is_an_empty_string? ) ? '' : scan_print(children).join
 
     a = self.root.attributes.to_a.map do |k,v|
       "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v.to_s)]
@@ -237,7 +239,7 @@ module XMLhelper
 
       if x.is_a? Rexle::Element then
 
-        a = Array.new(String.new(x.name), Hash.new(x.attributes), String.new(x.value))
+        a = [String.new(x.name), Hash.new(x.attributes), x.value.to_s]
 
         (a.concat(scan_to_a(x.children))) if x.children.length > 1
         r << a
@@ -417,12 +419,19 @@ class Rexle
     end
       
     def name()
+      
       if @rexle then
-        prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } if @rexle.prefixes.is_a? Array
+        
+        if @rexle.prefixes.is_a? Array then
+          prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } 
+        end
+        
         prefix ? @name.sub(prefix + ':', '') : @name
+        
       else
         @name
       end
+      
     end
     
     def next_element()      
@@ -534,7 +543,8 @@ class Rexle
           return index ? a[index.to_i - 1].to_s : a
         end
         
-        raw_results = xpath_value.empty? ? method(m.to_sym).call : method(m.to_sym).call(xpath_value) 
+        raw_results = xpath_value.empty? ? method(m.to_sym).call \
+                                    : method(m.to_sym).call(xpath_value)
 
         raw_results
 
@@ -562,7 +572,8 @@ class Rexle
       remaining_path = ($').to_s
 
       if remaining_path[/^contains\(/] then
-        raw_condition = raw_condition ? raw_condition + '/' + remaining_path : remaining_path
+        raw_condition = raw_condition ? raw_condition + '/' + remaining_path \
+                                                               : remaining_path
         remaining_path = ''        
       end
 
@@ -588,7 +599,8 @@ class Rexle
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
   
         return @attributes  if attribute == '*'
-        return [@attributes[attribute.to_sym]] if attribute and @attributes and @attributes.has_key?(attribute.to_sym)
+        return [@attributes[attribute.to_sym]] if attribute \
+                  and @attributes and @attributes.has_key?(attribute.to_sym)
         s = a_path.shift
       end      
 
@@ -610,7 +622,8 @@ class Rexle
             condition = element_part
 
             attr_search = format_condition('[' + condition + ']')
-            return [attribute_search(attr_search, self, self.attributes) != nil]            
+            return [attribute_search(attr_search, \
+                                     self, self.attributes) != nil]
           end
 
         end
@@ -620,7 +633,8 @@ class Rexle
       #element_name ||= '*'
       raw_condition = '' if condition
 
-      attr_search = format_condition(condition) if condition and condition.length > 0   
+      attr_search = format_condition(condition) if condition \
+                                                and condition.length > 0
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
 
       if attr_search2 then
@@ -710,18 +724,21 @@ class Rexle
               r = e.xpath(a_path.join('/') + raw_condition.to_s \
                     + remaining_path, &blk)
 
-              r = e if r.is_a?(Array) and r.first and r.first == true and a_path.empty?
+              r = e if r.is_a?(Array) and r.first and r.first == true \
+                                                              and a_path.empty?
 
               r
             end
 
-            next if rtn_element.nil? or (rtn_element.is_a? Array and rtn_element.empty?)
+            next if rtn_element.nil? or (rtn_element.is_a? Array \
+                                                      and rtn_element.empty?)
 
             if rtn_element.is_a? Hash then
               rtn_element
             elsif rtn_element.is_a? Array then
               rtn_element
-            elsif (rtn_element.is_a? String) || (rtn_element.is_a?(Array) and not(rtn_element[0].is_a? String))
+            elsif (rtn_element.is_a? String) || (rtn_element.is_a?(Array) \
+                                          and not(rtn_element[0].is_a? String))
               rtn_element
             elsif rtn_element.is_a? Rexle::Element
               rtn_element
@@ -730,7 +747,8 @@ class Rexle
             end
           end
 
-          rlist = rlist.flatten(1) unless rlist.length > 1 and rlist[0].is_a? Array
+          rlist = rlist.flatten(1) unless rlist.length > 1 \
+                                                       and rlist[0].is_a? Array
 
         end
 
@@ -742,11 +760,13 @@ class Rexle
         new_xpath = xpath_value[/^\/\/[\w:\-]+\/(.*)/,1]
 
         if new_xpath then
-          self.xpath(new_xpath + raw_condition.to_s + remaining_path, rlist,&blk)
+          self.xpath(new_xpath + raw_condition.to_s + remaining_path, \
+                                                                rlist,&blk)
         end
       end
  
-      rlist = rlist.flatten(1) unless not(rlist.is_a? Array) or (rlist.length > 1 and rlist[0].is_a? Array)
+      rlist = rlist.flatten(1) unless not(rlist.is_a? Array) \
+                                 or (rlist.length > 1 and rlist[0].is_a? Array)
       rlist = [rlist] if rlist.is_a? Rexle::Element
       rlist = (rlist.length > 0 ? true : false) if flag_func == true
 
@@ -885,7 +905,8 @@ class Rexle
 
     def elements(s=nil)
       procs = {
-        NilClass: proc {Elements.new(@child_elements.select{|x| x.kind_of? Rexle::Element })},
+        NilClass: proc {Elements.new(@child_elements\
+                                     .select{|x| x.kind_of? Rexle::Element })},
         String: proc {|x| @child_elements[x]}
       }
 
@@ -957,7 +978,7 @@ class Rexle
     alias text= value=
         
     def to_a()
-      e = [String.new(self.name), Hash.new(self.attributes), String.new(self.value)]
+      e = [String.new(self.name), Hash.new(self.attributes), self.value.to_s]
       [*e, *scan_to_a(self.children)]
     end
 
@@ -1022,7 +1043,10 @@ class Rexle
         return raw_items[0]
       else
 
-        andor_items = raw_items.map.with_index.select{|x,i| x[/\band\b|\bor\b/]}.map{|x| [x.last, x.last + 1]}.flatten
+        andor_items = raw_items.map.with_index\
+            .select{|x,i| x[/\band\b|\bor\b/]}\
+            .map{|x| [x.last, x.last + 1]}.flatten
+        
         indices = [0] + andor_items + [raw_items.length]
 
         if raw_items[0][0] == '@' then
@@ -1066,7 +1090,8 @@ class Rexle
                     "r = e.xpath('#{path}').first; r and r.value == #{value}"
                   end
                 else
-                  "(name == '%s' and value %s '%s')" % [x[0], x[1], x[2].sub(/^['"](.*)['"]$/,'\1')]
+                  "(name == '%s' and value %s '%s')" % [x[0], x[1], \
+                                             x[2].sub(/^['"](.*)['"]$/,'\1')]
                 end
               else
                 "e.value %s %s" % [x[1], x[2]]
@@ -1098,7 +1123,8 @@ class Rexle
       
 
       r << node.xpath(xpath2)
-      r << node.elements.map {|n| scan_match(n, path) if n.is_a? Rexle::Element}
+      r << node.elements.map {|n| scan_match(n, path) if n\
+                                                    .is_a? Rexle::Element}
       r
     end
 

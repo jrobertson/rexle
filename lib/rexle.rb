@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 11-May-2015: improvement: when Rexle::Element#delete is passed an XPath it 
+#         will now delete all elements found, not just the first element found.
 # 10-May-2015: bug fix: Rexle::Element#to_a now correctly returns an array
 #                       Corrected method scan_to_a() which is used by to_a()
 # 02-May-2015: improvement: Rexle::Element#xpath function contains() can 
@@ -883,8 +885,9 @@ class Rexle
       if obj then
 
         if obj.is_a? String then
-          e = self.element obj
-          e.delete if e
+          
+          self.xpath(obj).each {|e| e.delete}
+          
         else
 
           i = @child_elements.index(obj)
@@ -1326,8 +1329,8 @@ class Rexle
 
   def delete(xpath)
 
-    e = @doc.element(xpath)
-    e.delete if e
+    @doc.xpath(xpath).each {|e| e.delete }
+
   end
   
   alias remove delete
