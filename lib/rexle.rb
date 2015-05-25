@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 25-May-2015: bug fix: If a Polyrex XML string is being parsed then the  
+#                                       XML instructions will also now be read.
 # 11-May-2015: improvement: when Rexle::Element#delete is passed an XPath it 
 #         will now delete all elements found, not just the first element found.
 # 10-May-2015: bug fix: Rexle::Element#to_a now correctly returns an array
@@ -319,7 +321,8 @@ class Rexle
     if x then
       procs = {
         String: proc {|x| parse_string(x)},
-        Array: proc {|x| x}
+        Array: proc {|x| x},
+        RexleParser: ->(x){ parse_rexle(x)}
       }
       
       doc_node = ['doc',Attributes.new]
@@ -1399,7 +1402,7 @@ class Rexle
         procs = {
           'dynarex' => proc {|x| DynarexParser.new(x).to_a},
           #'polyrex' => proc {|x| PolyrexParser.new(x).to_a},
-          'polyrex' => proc {|x| RexleParser.new(x).to_a}
+          'polyrex' => proc {|x| parse_rexle(x)}
         }
         other_parser = procs[recordx_type]
         
