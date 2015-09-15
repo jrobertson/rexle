@@ -11,6 +11,8 @@ require 'cgi'
 
 # modifications:
 
+# 15-Sep-2015: improvement: When handling the HTML element textarea, it 
+#                                    is no longer printed as a self-closing tag
 # 25-May-2015: bug fix: If a Polyrex XML string is being parsed then the  
 #                                       XML instructions will also now be read.
 # 11-May-2015: improvement: when Rexle::Element#delete is passed an XPath it 
@@ -219,7 +221,8 @@ module XMLhelper
         tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
 
         if  (x.children and x.children.length > 0 \
-            and not x.children.is_an_empty_string?) or x.name == 'script' then
+            and not x.children.is_an_empty_string?) or \
+              x.name == 'script' or x.name == 'textarea' then
 
           out = ["<%s>" % tag]
           out << scan_print(x.children)
@@ -278,7 +281,8 @@ module XMLhelper
 
         if (x.value and x.value.length > 0) \
             or (x.children and x.children.length > 0 \
-            and not x.children.is_an_empty_string?) or x.name == 'script'  then
+            and not x.children.is_an_empty_string?) or \
+              x.name == 'script' or x.name == 'textarea' then
 
           ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
             ("\n" + '  ' * indent) : ''
@@ -377,6 +381,7 @@ class Rexle
       raise "Element name must not be blank" unless name
       @child_elements = []
       self.add_text value if value
+      #@log = Logger.new('rexle.log','daily')
 
     end
     
@@ -389,7 +394,8 @@ class Rexle
     end
 
     def contains(raw_args)
-
+      #log = Logger.new('rexle.log','daily')
+      #log.debug 'inside contains'
       path, raw_val = raw_args.split(',',2)
       val = raw_val.strip[/^["']?.*["']?$/]      
       
@@ -451,6 +457,16 @@ class Rexle
     
     alias next_sibling next_element
     
+    def notx(bool)
+      #log = Logger.new('rexle.log','daily')
+      #log.debug 'self ' + self.xml.inspect
+      #log.debug 'inside not() ' + bool.inspect
+      r = self.xpath(bool).any?
+      #log.debug 'r: ' + r.inspect
+      #log.debug 'r2: ' + (!r).inspect
+      !r
+    end
+    
     def previous_element()      
       
       id  = self.object_id
@@ -464,22 +480,26 @@ class Rexle
     alias previous_sibling previous_element
     
     def xpath(path, rlist=[], &blk)
+      #@log.debug 'inside xpath ' + path.inspect
 
       r = filter_xpath(path, rlist=[], &blk)
+      #@log.debug 'after filter_xpath : ' + r.inspect
       r.is_a?(Array) ? r.compact : r      
     end
     
     def filter_xpath(raw_path, rlist=[], &blk)
-      
+      #@log.debug 'inside filter_xpath : ' + raw_path.inspect
       path = String.new raw_path
 
       # is it a function
       fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)(?:\[(.*)\])?$/)
+      #@log.debug 'fn_match : ' + fn_match.inspect
       end_fn_match = path.slice!(/\[\w+\(\)\]$/)
       
       if end_fn_match then
         
         m = end_fn_match[1..-4]
+        #@log.debug 'its a function'
         [method(m.to_sym).call(xpath path)]
       
       elsif (fn_match and fn_match.captures.first[/^(attribute|@)/]) 
@@ -547,7 +567,7 @@ class Rexle
           a = texts()
           return index ? a[index.to_i - 1].to_s : a
         end
-        
+        #@log.debug 'before function call'
         raw_results = xpath_value.empty? ? method(m.to_sym).call \
                                     : method(m.to_sym).call(xpath_value)
 
@@ -558,12 +578,16 @@ class Rexle
     end    
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
+      
+      #@log.debug 'query_xpath : ' + raw_xpath_value.inspect
+      #@log.debug '++ ' + self.xml.inspect
 
       flag_func = false            
 
       xpath_value = raw_xpath_value.sub('child::','./')
 
-      if xpath_value[/^[\w\/]+\s*=.*/] then        
+      if xpath_value[/^[\w\/]+\s*=.*/] then
+        #@log.debug 'yah'
         flag_func = true
 
         xpath_value.sub!(/^\w+\s*=.*/,'.[\0]')
@@ -575,6 +599,7 @@ class Rexle
           .match(/([^\[]+)(\[[^\]]+\])?/).captures 
 
       remaining_path = ($').to_s
+      #@log.debug 'remaining_path: ' + remaining_path.inspect
 
       if remaining_path[/^contains\(/] then
         raw_condition = raw_condition ? raw_condition + '/' + remaining_path \
@@ -627,6 +652,7 @@ class Rexle
             condition = element_part
 
             attr_search = format_condition('[' + condition + ']')
+            #@log.debug 'attr_search : ' + attr_search.inspect
             return [attribute_search(attr_search, \
                                      self, self.attributes) != nil]
           end
@@ -640,9 +666,11 @@ class Rexle
 
       attr_search = format_condition(condition) if condition \
                                                 and condition.length > 0
+      #@log.debug 'attr_search2 : ' + attr_search.inspect
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
 
       if attr_search2 then
+        #@log.debug 'before attribute_Search'
         r4 = attribute_search(attr_search, self, self.attributes)
         return r4
       end
@@ -1037,8 +1065,7 @@ class Rexle
     def format_condition(condition)
 
       raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|\
-         and|or|\d+|[!=<>]+|position\(\)|contains\([^\)]+\)|[@\w\.\/&;]+/)
-      
+         and|or|\d+|[!=<>]+|position\(\)|contains\([^\)]+\)|notx\([^\)]+\)|[@\w\.\/&;]+/)
       
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
@@ -1046,6 +1073,8 @@ class Rexle
         rrr = "i %s %s" % [raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
         return rrr
       elsif raw_items[0][/^contains\(/]
+        return raw_items[0]
+      elsif  raw_items[0][/^notx\(/]
         return raw_items[0]
       else
 
