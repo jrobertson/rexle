@@ -7,6 +7,7 @@ require 'dynarex-parser'
 require 'polyrex-parser'
 require 'rexle-css'
 require 'cgi'
+require 'backtrack-xpath'
 
 
 # modifications:
