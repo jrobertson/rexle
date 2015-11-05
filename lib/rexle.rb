@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 05-Nov-2015: bug fix: UTF-8 encoding is now enforced when 
+#                                              preparing the XML for output
 # 15-Sep-2015: improvement: When handling the HTML element textarea, it 
 #                                    is no longer printed as a self-closing tag
 # 25-May-2015: bug fix: If a Polyrex XML string is being parsed then the  
@@ -164,7 +166,8 @@ module XMLhelper
   def doc_print(children, declaration=true)
 
     body = (children.nil? or children.empty? \
-           or children.is_an_empty_string? ) ? '' : scan_print(children).join
+           or children.is_an_empty_string? ) ? '' : \
+                          scan_print(children).join.force_encoding("utf-8")
 
     a = self.root.attributes.to_a.map do |k,v|
       "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v.to_s)]
@@ -211,9 +214,9 @@ module XMLhelper
 
   def scan_print(nodes)
 
-    nodes.map do |x|
-
-      if x.is_a? Rexle::Element then
+    r2 = nodes.map do |x|
+      
+      r = if x.is_a? Rexle::Element then
 
         a = x.attributes.to_a.map do |k,v| 
           "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v)]
@@ -227,6 +230,7 @@ module XMLhelper
 
           out = ["<%s>" % tag]
           out << scan_print(x.children)
+
           out << "</%s>" % x.name
         else
           out = ["<%s/>" % tag]
@@ -237,7 +241,11 @@ module XMLhelper
       elsif x.is_a? Rexle::Comment then x.print        
         
       end
+
+      r
     end
+    
+    r2
 
   end
   
@@ -1018,6 +1026,7 @@ class Rexle
     end
 
     def xml(options={})
+
       h = {
         Hash: lambda {|x|
           o = {pretty: false}.merge(x)
