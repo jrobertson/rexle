@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 02-Mar-2016: improvement: When handling the HTML element iframe, it 
+#                                    is no longer printed as a self-closing tag
 # 05-Nov-2015: bug fix: UTF-8 encoding is now enforced when 
 #                                              preparing the XML for output
 # 15-Sep-2015: improvement: When handling the HTML element textarea, it 
@@ -226,7 +228,8 @@ module XMLhelper
 
         if  (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or \
-              x.name == 'script' or x.name == 'textarea' then
+              x.name == 'script' or x.name == 'textarea' \
+                                  or x.name == 'iframe' then
 
           out = ["<%s>" % tag]
           out << scan_print(x.children)
@@ -291,7 +294,8 @@ module XMLhelper
         if (x.value and x.value.length > 0) \
             or (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or \
-              x.name == 'script' or x.name == 'textarea' then
+              x.name == 'script' or x.name == 'textarea' or \
+                                                  x.name == 'iframe' then
 
           ind1 = (x.children and x.children.grep(Rexle::Element).length > 0) ? 
             ("\n" + '  ' * indent) : ''
