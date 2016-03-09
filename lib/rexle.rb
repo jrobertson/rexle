@@ -12,6 +12,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 09-Mar-2016: bug fix: '.' now returns the current element
 # 02-Mar-2016: improvement: When handling the HTML element iframe, it 
 #                                    is no longer printed as a self-closing tag
 # 05-Nov-2015: bug fix: UTF-8 encoding is now enforced when 
@@ -426,6 +427,10 @@ class Rexle
       length = query_xpath(path).flatten.compact.length
       length
     end
+    
+    def current()
+      self
+    end
 
     def at_css(selector)
       self.root.element RexleCSS.new(selector).to_xpath
@@ -714,14 +719,25 @@ class Rexle
           ename = element_name
         end        
 
-        if ename != '..' then
+        if ename == '..' then
+          
+          remaining_xpath = raw_path[/\.\.\/(.*)/,1]
+          # select the parent element
+
+          r2 =  self.parent.xpath(remaining_xpath)
+
+          return r2
+        elsif ename == '.'
+          return self
+        else
 
           return_elements = @child_elements.map.with_index.select do |x, i|
 
             next unless x.is_a? Rexle::Element
 
-            (x.name == ename || ename == '.') or  (ename == '*')
+            x.name == ename or  (ename == '*')
           end
+
 
           if selector then
             ne = return_elements.inject([]) do |r,x| 
@@ -735,15 +751,8 @@ class Rexle
 
             return_elements = ne.map {|x| [@child_elements[x], x] if x}
           end
-        else
                     
-          remaining_xpath = raw_path[/\.\.\/(.*)/,1]
-          # select the parent element
 
-          r2 =  self.parent.xpath(remaining_xpath)
-
-          return r2
-          
         end
       end
 
