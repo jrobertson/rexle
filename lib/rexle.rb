@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 12-Mar-2016: A predicate can now handle position() with the 
+#                              equality operator e.g. b[position() = 2]
 # 09-Mar-2016: bug fix: '.' now returns the current element
 # 02-Mar-2016: improvement: When handling the HTML element iframe, it 
 #                                    is no longer printed as a self-closing tag
@@ -56,111 +58,7 @@ require 'backtrack-xpath'
 #              Now stores any comment elements as well as printing them.
 # 07-Feb-2015: Implemented XPath function last() e.g. 
 #                                       doc.root.xpath('records/item[last()]')
-# 05-Feb=2015: bug fix: 
-#                  Rexle::Element#texts now transforms all items to a String
-# 04-Feb-2015: An xpath containing text() now calls texts() to 
-#              return all strings within that element
-# 03-Feb-2015: feature: Rexle::Element#text now includes the unescape method
-# 30-Jan-2015: Rexle::Element#texts now returns the values of 
-#                CData elements as well as strings
-# 29-Jan-2015: Removed code references to REXML, as it was no longer needed.
-#              feature: Implemented Rexle::Element#cdatas. A CData element is 
-#                       now created from the parsing stage.
-# 26-Jan-2015: bug fix: An element containing a nil value is now treated as an 
-#                       empty string when quering with an XPath
-# 25-Dec-2014: bug fix: script tag is now formatted with expected attributes
-# 21-Dec-2014: HTML related: A script tag will no longer be a self-closing tag.
-# 20-Dec-2014: bug fix: Fixes an uncommon XPath selection. 
-#  see http://www.jamesrobertson.eu/bugtracker/2014/dec/18/xpath-returns-an-empty-list.html
-# 07-Dec-2014: feature: The Rexle::Element#Css() parameter can now contain 
-#                       multiple css paths within the string e.g. '.abc, div'
-# 30-Nov-2014: feature: XPath now supports parent (..) traversal e.g. b/../b2
-# 21-Nov-2014: feature: Added at_css() to select a single element
-# 27-Oct-2014: bug fix: Now Checks for an array instead of a string when 
-#                       outputting xml attribute values to get 
-#                       around nil values
-# 26-Oct-2014: bug fix: XML output containing a class attribute, 
-#                       now appears as a string.   Empty nodes are 
-#                       now displayed as self-closing tags. 
-#                       An XPath containing a @class attribute is now 
-#                       first validated against the element attribute existence
-#                       Rexle::Element#attribute now checks the attributes type
-# 21-Oct-2014: partial feature: An Xpath containing //preceding-sibling and 
-#                       //following-sibling now works
-# 19-Oct-2014: feature: An XPath containing the attribute @class is 
-#              now treated as a type of CSS selector storage area
-#              feature: Implemented Rexle::Element#previous_element and
-#                       Rexle::Element#next_element
 
-# 13-Oct-2014: feature: Implemented Rexle#clone
-# 12-Oct-2014: feature: Implemented CSS style element selection
-# 27-Sep-2014: bug fix: ELement values are now explicitly transformed to string
-# 16-Sep-2014: Feature: Impelemented Rexle::Element#each_recursive
-# 07-Aug-2014: feature: Rexle::CData can now be used to create CDATA
-# 12-Jul-2014: XPath with a single element condition now works e.g. b[c]
-# 07-Jun-2014: bug fix: An XPath nested within an XPath (using a selector) 
-#                       should now wok properly e.g. record/abc[item/xyz="red"]
-# 04-Jun-2014: bug fix: If XPath contains /text(), only valid 
-#                       text elements are returned
-# 03-Jun-2014: bug fix: Text elements are now nil by default
-# 01-Jun-2014: bug fix: XPath elements separated by a pipe '|' are now 
-#                       stripped of white space
-# 20-May-2014: feature: XPath Descendants after the element (or without
-#                       the element) are now supported
-# 02-Apr-2014: bug fix: Rexle::Element#each now returns the children, 
-#                       including the 1st text element
-# 24-Mar-2014: minor bug fix: A blank line is no longer inserted at the 
-#              top of the XML document
-# 14-Mar-2014: bug fix: An XML processing instruction will now only be 
-#                       display if declaration = true
-# 12-Mar-2014: bug fix: Duplicate processing instruction bug fixed
-# 17-Jan-2014: bug fix: Rexle::Element to_a now returns all child elements
-# 31-Dec-2013: feature: now supports processing instructions
-# 18-Dec-2013: feature fix: the result of text() is no longer unescaped
-# 13-Dec-2013: bug fix: elements with dashes can now be queried
-# 14-Nov-2013: feature: Implemented method content() to output XML as 
-#                unescaped plain text
-# 08-Nov-2013: An element will now only be deleted if it has a parent
-# 05-Nov-2013: If a node is added to the document which already exists in the
-#                 node, it will be moved accordingly.
-# 05-Nov02013: XPath bug fix: recursive selector with conditional parent now 
-#                returns the correct child e.g. //b[2]/c
-# 10-Oct-2013: bug fix: child elements which have the same name as their parent 
-#                are now select correctly through XPath
-# 22-sep-2013: feature: remove() is now an alias of delete()
-# 30-jul-2013: feature: Rexle::Element#xml now accepts an xpath
-# 25-jun-2013: bug fix: doc.root.delete(xpath) fixed
-# 10-Nov-2012: Elements can now be added starting from an empty document
-# 06-Nov-2012: additional xpath predicate now implemented e.g.
-#               fun/. > 200 => [false, false, true, true]
-# 21-Oct-2012: xpath predicate now implemented e.g. fun/@id='4' => true
-# 20-Oct-2012: feature: added Rexle::Element#texts which is the equivalent
-#                 of REXML::Element#texts
-#              feature: Rexle::Element#add_text is now the equivalent of 
-#                 REXML::Element#add_text                  
-# 10-Sep-2012: bug fix: Removed code from method pretty_print in order to
-#                 get the XML displayed properly
-# 23-Aug-2012: feature: implemented xpath function contains()
-# 17-Aug-2012: bug fix: pretty print now ignores text containing empty space
-# 16-Aug-2012: the current element's text (if its not empty) is now returned 
-#                from its children method
-# 15-Aug-2012: feature: xpath containing child:: now supported
-# 13-Aug-2012: bug fix: xpath can now handle the name() function
-# 11-Aug-2012: bug fix: separated the max() method from 1 line into 3 
-#                and that fixed it
-# 08-Aug-2012: feature: added Element#insert_before and Element#insert_after
-# 19-Jul-2012: Changed children to elements where appropriate
-# 15-Jul-2012: bug fix: self.root.value is no longer appended
-#                 to the body if there are no child elements
-# 19-Jun-2012: a bug fix for .//*[@class]
-# 17-Jun-2012: a couple of new xpath things are supported '.' and '|'
-# 15-Apr-2012: bug fix: New element names are typecast as string
-# 16-Mar-2012: bug fix: Element names which contain a colon can now be selected
-#                in the xpath.
-# 22-Feb-2012: bug resolution: Deactivated the PolyrexParser; using RexleParser instead
-# 14-Jan-2012: Implemented Rexle::Elements#each
-# 21-Dec-2011: Bug fix: xpath modified to allow querying from the actual 
-# root rather than the 1st child element from the root
 
 
 
@@ -1093,7 +991,7 @@ class Rexle
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       elsif raw_items[0] == 'position()' then
-        rrr = "i %s %s" % [raw_items[1].gsub('&lt;','<').gsub('&gt;','>'), raw_items[-1]]
+        rrr = "i %s %s" % [raw_items[1].gsub('&lt;','<').gsub('&gt;','>').gsub('=','=='), raw_items[-1]]
         return rrr
       elsif raw_items[0][/^contains\(/]
         return raw_items[0]
@@ -1136,7 +1034,7 @@ class Rexle
 
             if x.length >= 3 then
 
-              x[1] = '==' if x[1] == '='
+              #jr110316 x[1] = '==' if x[1] == '='
               if x[0] != '.' then
                 if x[0][/\//] then
                   
@@ -1223,10 +1121,14 @@ class Rexle
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
 
-      if attr_search.is_a? Fixnum then
+      r = if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
-      elsif attr_search[/i\s[<>\=]\s\d+/] and eval(attr_search) then
-        block_given? ? blk.call(e) : e
+      elsif attr_search[/i\s(?:<|>|==)\s\d+/] then
+        
+        if eval(attr_search) then
+          block_given? ? blk.call(e) : e
+        end
+        
       elsif h and !h.empty? and attr_search[/^h\[/] and eval(attr_search) then
         block_given? ? blk.call(e) : e
       elsif attr_search[/^\(name ==/] and e.child_elements.select {|x| 
@@ -1253,6 +1155,8 @@ class Rexle
       elsif e.element attr_search then
         block_given? ? blk.call(e) : e
       end      
+
+      r
     end
     
     def recursive_scan(nodes, &blk)
