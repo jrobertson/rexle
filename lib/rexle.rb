@@ -14,6 +14,8 @@ require 'backtrack-xpath'
 
 # 13-Mar-2016: bug fix: Reapplied a statement that was commented out in 
 #                       the previous gem release
+#              bug fix: Removed a redundant statement from 
+#                       method attribute_search()
 # 12-Mar-2016: A predicate can now handle position() with the 
 #                              equality operator e.g. b[position() = 2]
 # 09-Mar-2016: bug fix: '.' now returns the current element
@@ -1123,7 +1125,7 @@ class Rexle
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
 
-      r = if attr_search.is_a? Fixnum then
+      r2 = if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s(?:<|>|==)\s\d+/] and eval(attr_search) then
         block_given? ? blk.call(e) : e        
@@ -1150,11 +1152,9 @@ class Rexle
         end
       elsif attr_search[/e\.xpath/] and eval(attr_search)
         block_given? ? blk.call(e) : e
-      elsif e.element attr_search then
-        block_given? ? blk.call(e) : e
       end      
 
-      r
+      r2
     end
     
     def recursive_scan(nodes, &blk)
