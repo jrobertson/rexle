@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 13-Mar-2016: bug fix: Reapplied a statement that was commented out in 
+#                       the previous gem release
 # 12-Mar-2016: A predicate can now handle position() with the 
 #                              equality operator e.g. b[position() = 2]
 # 09-Mar-2016: bug fix: '.' now returns the current element
@@ -1034,7 +1036,7 @@ class Rexle
 
             if x.length >= 3 then
 
-              #jr110316 x[1] = '==' if x[1] == '='
+              x[1] = '==' if x[1] == '='
               if x[0] != '.' then
                 if x[0][/\//] then
                   
@@ -1123,12 +1125,8 @@ class Rexle
 
       r = if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
-      elsif attr_search[/i\s(?:<|>|==)\s\d+/] then
-        
-        if eval(attr_search) then
-          block_given? ? blk.call(e) : e
-        end
-        
+      elsif attr_search[/i\s(?:<|>|==)\s\d+/] and eval(attr_search) then
+        block_given? ? blk.call(e) : e        
       elsif h and !h.empty? and attr_search[/^h\[/] and eval(attr_search) then
         block_given? ? blk.call(e) : e
       elsif attr_search[/^\(name ==/] and e.child_elements.select {|x| 
