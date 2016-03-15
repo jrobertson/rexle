@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 15-Mar-2016: bug fix: Reapplied a select case statement (which had 
+#                     subsequently been deleted) from method attribute_search()
 # 13-Mar-2016: bug fix: Reapplied a statement that was commented out in 
 #                       the previous gem release
 #              bug fix: Removed a redundant statement from 
@@ -310,6 +312,7 @@ class Rexle
     end
 
     def contains(raw_args)
+
       #log = Logger.new('rexle.log','daily')
       #log.debug 'inside contains'
       path, raw_val = raw_args.split(',',2)
@@ -498,7 +501,7 @@ class Rexle
     end    
     
     def query_xpath(raw_xpath_value, rlist=[], &blk)
-      
+
       #@log.debug 'query_xpath : ' + raw_xpath_value.inspect
       #@log.debug '++ ' + self.xml.inspect
 
@@ -519,9 +522,11 @@ class Rexle
           .match(/([^\[]+)(\[[^\]]+\])?/).captures 
 
       remaining_path = ($').to_s
+
       #@log.debug 'remaining_path: ' + remaining_path.inspect
 
       if remaining_path[/^contains\(/] then
+
         raw_condition = raw_condition ? raw_condition + '/' + remaining_path \
                                                                : remaining_path
         remaining_path = ''        
@@ -629,8 +634,12 @@ class Rexle
           r2 =  self.parent.xpath(remaining_xpath)
 
           return r2
+          
         elsif ename == '.'
-          return self
+
+          remaining_xpath = raw_path[1..-1]
+          return remaining_xpath.empty? ? self : self.xpath(remaining_xpath)
+          
         else
 
           return_elements = @child_elements.map.with_index.select do |x, i|
@@ -1069,18 +1078,17 @@ class Rexle
     end
     
     def scan_match(node, path)
-
+      
       if path == '//' then
         return [node, node.text, 
           node.elements.map {|x| scan_match x, path}]
       end
-
+      
       r = []
       xpath2 = path[2..-1] 
-      xpath2.sub!(/^\*\//,'')
-      xpath2.sub!(/^\*/,self.name)
-      xpath2.sub!(/^\w+/,'').sub!(/^\//,'') if xpath2[/^\w+/] == self.name
-      
+      #jr150316 xpath2.sub!(/^\*\//,'')
+      #jr150316xpath2.sub!(/^\*/,self.name)
+      #jr150316xpath2.sub!(/^\w+/,'').sub!(/^\//,'') if xpath2[/^\w+/] == self.name
 
       r << node.xpath(xpath2)
       r << node.elements.map {|n| scan_match(n, path) if n\
@@ -1151,6 +1159,8 @@ class Rexle
           block_given? ? blk.call(e) : e
         end
       elsif attr_search[/e\.xpath/] and eval(attr_search)
+        block_given? ? blk.call(e) : e
+      elsif e.element(attr_search)
         block_given? ? blk.call(e) : e
       end      
 
