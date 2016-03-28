@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 28-Mar-2016: minor feature:  the name of an attribute can now be 
+#                              passed into Rexle::Element#text
 # 15-Mar-2016: bug fix: Reapplied a select case statement (which had 
 #                     subsequently been deleted) from method attribute_search()
 # 13-Mar-2016: bug fix: Reapplied a statement that was commented out in 
@@ -250,8 +252,9 @@ class Rexle
       doc_node = ['doc',Attributes.new]
   
       @a = procs[x.class.to_s.to_sym].call(x)
-      @doc = scan_element(*(doc_node << @a))
       
+      @doc = scan_element(*(doc_node << @a))
+
       # fetch the namespaces
       @prefixes = []
 
@@ -299,7 +302,6 @@ class Rexle
       raise "Element name must not be blank" unless name
       @child_elements = []
       self.add_text value if value
-      #@log = Logger.new('rexle.log','daily')
 
     end
     
@@ -313,8 +315,6 @@ class Rexle
 
     def contains(raw_args)
 
-      #log = Logger.new('rexle.log','daily')
-      #log.debug 'inside contains'
       path, raw_val = raw_args.split(',',2)
       val = raw_val.strip[/^["']?.*["']?$/]      
       
@@ -381,12 +381,9 @@ class Rexle
     alias next_sibling next_element
     
     def notx(bool)
-      #log = Logger.new('rexle.log','daily')
-      #log.debug 'self ' + self.xml.inspect
-      #log.debug 'inside not() ' + bool.inspect
+
       r = self.xpath(bool).any?
-      #log.debug 'r: ' + r.inspect
-      #log.debug 'r2: ' + (!r).inspect
+
       !r
     end
     
@@ -896,6 +893,8 @@ class Rexle
       return self.value if s.empty? 
       
       e = self.element(s)
+      return e if e.is_a? String
+      
       e.text if e
     end
     
@@ -1406,22 +1405,23 @@ class Rexle
 
     if children then
 
-      children.each do |x|
-        if x.is_a? Array then
+      children.each do |x4|
+        
 
-          element.add_element scan_element(*x)        
-        elsif x.is_a? String then
+        if x4.is_a? Array then
+          element.add_element scan_element(*x4)        
+        elsif x4.is_a? String then
 
-          e = if x.is_a? String then
+          e = if x4.is_a? String then
 
-            x
-          elsif x.name == '![' then
+            x4
+          elsif x4.name == '![' then
 
-            Rexle::CData.new(x)
+            Rexle::CData.new(x4)
             
-          elsif x.name == '!-' then
+          elsif x4.name == '!-' then
 
-            Rexle::Comment.new(x)
+            Rexle::Comment.new(x4)
             
           end
 
