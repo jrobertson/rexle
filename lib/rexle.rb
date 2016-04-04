@@ -14,6 +14,8 @@ require 'backtrack-xpath'
 
 # 04-Apr-2016: bug fix: modified the bug fix from the 15-Mar-2016 to 
 #              validate on a function name only within the variable attr_search
+#              minor improvement: Added a new line character between 
+#                                 XML processing instructions
 # 28-Mar-2016: minor feature:  the name of an attribute can now be 
 #                              passed into Rexle::Element#text
 # 15-Mar-2016: bug fix: Reapplied a select case statement (which had 
@@ -107,7 +109,7 @@ module XMLhelper
       ' ' + a.join(' '), ind, body, "\n", self.root.name]
 
     if self.instructions and declaration then
-      processing_instructions("\n") + "\n" + xml
+      processing_instructions("") + xml
     else 
       xml
     end
@@ -119,7 +121,7 @@ module XMLhelper
 
   def processing_instructions(s='')
     self.instructions.map do |instruction|
-      "<?%s?>" % instruction.join(' ') 
+      "<?%s?>\n" % instruction.join(' ') 
     end.join s
   end
 
