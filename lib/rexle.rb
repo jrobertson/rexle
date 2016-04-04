@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 04-Apr-2016: bug fix: modified the bug fix from the 15-Mar-2016 to 
+#              validate on a function name only within the variable attr_search
 # 28-Mar-2016: minor feature:  the name of an attribute can now be 
 #                              passed into Rexle::Element#text
 # 15-Mar-2016: bug fix: Reapplied a select case statement (which had 
@@ -1159,7 +1161,7 @@ class Rexle
         end
       elsif attr_search[/e\.xpath/] and eval(attr_search)
         block_given? ? blk.call(e) : e
-      elsif e.element(attr_search)
+      elsif attr_search[/^\w+\(/] and e.element(attr_search)
         block_given? ? blk.call(e) : e
       end      
 
