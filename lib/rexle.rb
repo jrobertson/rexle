@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 16-Apr-2016: improvement: The HTML element div is no longer printed as 
+#                           a self-closing tag if empty
 # 04-Apr-2016: bug fix: modified the bug fix from the 15-Mar-2016 to 
 #              validate on a function name only within the variable attr_search
 #              minor improvement: Added a new line character between 
@@ -136,11 +138,12 @@ module XMLhelper
         end
 
         tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
+        
+        non_self_closing_tags = %w(script textarea iframe div)
 
         if  (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or \
-              x.name == 'script' or x.name == 'textarea' \
-                                  or x.name == 'iframe' then
+              non_self_closing_tags.include? x.name then
 
           out = ["<%s>" % tag]
           out << scan_print(x.children)
