@@ -12,7 +12,9 @@ require 'backtrack-xpath'
 
 # modifications:
 
-# 21-Apr-2016: feature: The element index can now be used through an 
+# 21-Apr-2016: feature: The xpath() method now returns a Rexle::Recordset object 
+#                       which itself can be treat as a Rexle document
+#              feature: The element index can now be used through an 
 #                       xpath block parameter
 #              An xpath predicate can now contain the mod operator as well as 
 #              containing nested logic  e.g. [(position() mod 2) == 1]
@@ -415,7 +417,15 @@ class Rexle
 
       r = filter_xpath(path, rlist=[], &blk)
       #@log.debug 'after filter_xpath : ' + r.inspect
-      r.is_a?(Array) ? r.compact : r      
+      
+      if r.is_a?(Array) then
+        
+        Recordset.new(r.compact)
+        
+      else
+        r
+      end
+      
     end
     
     def filter_xpath(raw_path, rlist=[], &blk)
@@ -1455,5 +1465,28 @@ class Rexle
     attributes = node.attributes.inject({}){|r,x| r.merge(Hash[*x])}
     [node.name, node.text.to_s, attributes, *children]
   end
+  
+  class Recordset < Array
+
+    def initialize(a)
+      super(a)
+    end
+    
+    def to_doc()
+      
+      recordset = self.map(&:to_a)
+      Rexle.new(['root',{}, *recordset])
+    
+    end
+    
+    def xpath(xpath)
+      self.to_doc.root.xpath(xpath)
+    end
+    
+    def element(xpath)
+      self.to_doc.root.element(xpath)
+    end
+
+  end  
     
 end
