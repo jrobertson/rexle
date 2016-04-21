@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 21-Apr-2016: An xpath predicate can now contain the mod operator as well as 
+#              containing nested logic  e.g. [(position() mod 2) == 1]
 # 16-Apr-2016: improvement: The HTML element div is no longer printed as 
 #                           a self-closing tag if empty
 # 04-Apr-2016: bug fix: modified the bug fix from the 15-Mar-2016 to 
@@ -1010,7 +1012,10 @@ class Rexle
       if raw_items[0][/^\d+$/] then
         return raw_items[0].to_i
       elsif raw_items[0] == 'position()' then
-        rrr = "i %s %s" % [raw_items[1].gsub('&lt;','<').gsub('&gt;','>').gsub('=','=='), raw_items[-1]]
+
+        rrr = condition[1..-2].gsub(/position\(\)/,'i').gsub('&lt;','<')\
+            .gsub('&gt;','>').gsub(/\s=\B/,' ==').gsub(/\bmod\b/,'%')
+
         return rrr
       elsif raw_items[0][/^contains\(/]
         return raw_items[0]
@@ -1138,10 +1143,10 @@ class Rexle
     end
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
-
+      
       r2 = if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
-      elsif attr_search[/i\s(?:<|>|==)\s\d+/] and eval(attr_search) then
+      elsif attr_search[/i\s(?:<|>|==|%)\s\d+/] and eval(attr_search) then
         block_given? ? blk.call(e) : e        
       elsif h and !h.empty? and attr_search[/^h\[/] and eval(attr_search) then
         block_given? ? blk.call(e) : e
