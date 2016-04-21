@@ -14,8 +14,6 @@ require 'backtrack-xpath'
 
 # 21-Apr-2016: feature: The xpath() method now returns a Rexle::Recordset object 
 #                       which itself can be treat as a Rexle document
-#              feature: The element index can now be used through an 
-#                       xpath block parameter
 #              An xpath predicate can now contain the mod operator as well as 
 #              containing nested logic  e.g. [(position() mod 2) == 1]
 # 16-Apr-2016: improvement: The HTML element div is no longer printed as 
@@ -1149,7 +1147,7 @@ class Rexle
         r6
       else
 
-        block_given? ? blk.call(e, i) : e
+        block_given? ? blk.call(e) : e
       end
 
     end
@@ -1157,21 +1155,21 @@ class Rexle
     def attribute_search(attr_search, e, h, i=nil, &blk)
       
       r2 = if attr_search.is_a? Fixnum then
-        block_given? ? blk.call(e,i) : e if i == attr_search 
+        block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s(?:<|>|==|%)\s\d+/] and eval(attr_search) then
-        block_given? ? blk.call(e,i) : e        
+        block_given? ? blk.call(e) : e        
       elsif h and !h.empty? and attr_search[/^h\[/] and eval(attr_search) then
-        block_given? ? blk.call(e,i) : e
+        block_given? ? blk.call(e) : e
       elsif attr_search[/^\(name ==/] and e.child_elements.select {|x| 
             next unless x.is_a? Rexle::Element
             name, attributes, value = x.name, x.attributes, x.value.to_s
             b = eval(attr_search)
             b}.length > 0
 
-        block_given? ? blk.call(e,i) : e
+        block_given? ? blk.call(e) : e
         
       elsif attr_search[/^\(name ==/] and eval(attr_search) 
-        block_given? ? blk.call(e,i) : e          
+        block_given? ? blk.call(e) : e          
       elsif attr_search[/^e\.value/]
 
         v = attr_search[/[^\s]+$/]
@@ -1179,12 +1177,12 @@ class Rexle
         attr_search.sub!(/^e.value/,'e.value.' + duck_type)
 
         if eval(attr_search) then
-          block_given? ? blk.call(e,i) : e
+          block_given? ? blk.call(e) : e
         end
       elsif attr_search[/e\.xpath/] and eval(attr_search)
-        block_given? ? blk.call(e,i) : e
+        block_given? ? blk.call(e) : e
       elsif attr_search[/^\w+\(/] and e.element(attr_search)
-        block_given? ? blk.call(e,i) : e
+        block_given? ? blk.call(e) : e
       end      
 
       r2
