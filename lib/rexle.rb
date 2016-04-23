@@ -588,8 +588,8 @@ class Rexle
         unless element_part[/^(@|[@\.a-zA-Z]+[\s=])/] then
 
           element_name = element_part[/^[\w:\-\*\.]+/]
-          
-          if element_name[/^\d/] then
+
+          if element_name and element_name[/^\d/] then
             element_name = nil
           end
           
