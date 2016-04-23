@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 22-Apr-2016: revision: The previous feature can now include simple 
+#                        predicate logic e.g. 2 < 5
 # 22-Apr-2016: feature: Using an XPath A pure logic predicate can now be 
 #                       processed e.g. (4 % 1) != 1
 # 21-Apr-2016: feature: The xpath() method now returns a Rexle::Recordset object 
@@ -579,15 +581,19 @@ class Rexle
       # isolate the xpath to return just the path to the current element
 
       elmnt_path = s[/^([a-zA-Z:\-\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
-
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
       if element_part then
 
-        unless element_part[/^(@|[@\.\w]+[\s=])/] then
+        unless element_part[/^(@|[@\.a-zA-Z]+[\s=])/] then
+
           element_name = element_part[/^[\w:\-\*\.]+/]
           
-          condition = raw_xpath_value unless element_name
+          if element_name[/^\d/] then
+            element_name = nil
+          end
+          
+          condition = raw_xpath_value if element_name.nil?
 
         else
           if xpath_value[/^\[/] then
@@ -595,7 +601,6 @@ class Rexle
             element_name = nil
           else
             condition = element_part
-
             attr_search = format_condition('[' + condition + ']')
             #@log.debug 'attr_search : ' + attr_search.inspect
             return [attribute_search(attr_search, \
@@ -605,7 +610,7 @@ class Rexle
         end
 
       end
-      
+
       #element_name ||= '*'
       raw_condition = '' if condition
 
@@ -1021,9 +1026,9 @@ class Rexle
 
     def format_condition(condition)
 
-      raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|\
+      raw_items = condition.sub(/\[(.*)\]/,'\1').scan(/\'[^\']*\'|\"[^\"]*\"|\
          and|or|\d+|[!=<>%]+|position\(\)|contains\([^\)]+\)|notx\([^\)]+\)|[@\w\.\/&;]+/)
-      
+
       if raw_items[0][/^\d+$/] then
 
         if condition[0 ] == '[' then
