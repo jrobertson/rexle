@@ -12,7 +12,9 @@ require 'backtrack-xpath'
 
 # modifications:
 
-# 22-Apr-2016: revision: The previous feature can now include simple 
+# 23-Apr-2016: xpath improvement: Better predicate support 
+#                                 e.g. e.xpath("node != ''")
+#              revision: The previous feature can now include simple 
 #                        predicate logic e.g. 2 < 5
 # 22-Apr-2016: feature: Using an XPath A pure logic predicate can now be 
 #                       processed e.g. (4 % 1) != 1
@@ -596,6 +598,7 @@ class Rexle
           condition = raw_xpath_value if element_name.nil?
 
         else
+
           if xpath_value[/^\[/] then
             condition = xpath_value
             element_name = nil
@@ -627,6 +630,8 @@ class Rexle
       
       
       return_elements = []
+      
+      
 
       if raw_path[0,2] == '//' then
 
@@ -667,15 +672,44 @@ class Rexle
         elsif element_name.nil?
           return eval attr_search          
         else
+          
+          if raw_selector.nil? and ename != element_part  then
+
+            right_cond = element_part[/#{ename}(.*)/,1]
+
+          end                    
 
           return_elements = @child_elements.map.with_index.select do |x, i|
 
             next unless x.is_a? Rexle::Element
 
-            x.name == ename or  (ename == '*')
+            #x.name == ename or  (ename == '*')
+            
+            r10 = ((x.name == ename) or  (ename == '*'))
+
+            
+
           end
+          
+          if right_cond then
+                        
+            
+            r12 = return_elements.map do |x, i|
 
+              if x.text then
 
+                r11 = eval x.text.to_s + right_cond
+
+              else
+                false
+              end
+              
+            end
+            
+            return r12
+            
+          end          
+          
           if selector then
             ne = return_elements.inject([]) do |r,x| 
               i = x.last + selector
@@ -692,8 +726,7 @@ class Rexle
 
         end
       end
-
-
+                
       if return_elements.length > 0 then
 
         if (a_path + [remaining_path]).join.empty? then
@@ -741,6 +774,7 @@ class Rexle
 
           rlist = rlist.flatten(1) unless rlist.length > 1 \
                                                        and rlist[0].is_a? Array
+          rlist
 
         end
 
