@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 22-Apr-2016: feature: Using an XPath A pure logic predicate can now be 
+#                       processed e.g. (4 % 1) != 1
 # 21-Apr-2016: feature: The xpath() method now returns a Rexle::Recordset object 
 #                       which itself can be treat as a Rexle document
 #              An xpath predicate can now contain the mod operator as well as 
@@ -411,6 +413,7 @@ class Rexle
     alias previous_sibling previous_element
     
     def xpath(path, rlist=[], &blk)
+      
       #@log.debug 'inside xpath ' + path.inspect
 
       r = filter_xpath(path, rlist=[], &blk)
@@ -461,7 +464,6 @@ class Rexle
         }
         bucket = []
         raw_results = path.split('|').map do |xp|
-
           query_xpath(xp.strip, bucket, &blk)         
         end
         
@@ -489,7 +491,6 @@ class Rexle
         }
         bucket = []
         raw_results = path.split('|').map do |xp|
-
           query_xpath(xp.strip, bucket, &blk)         
         end
 
@@ -497,7 +498,7 @@ class Rexle
         results = raw_results # .flatten.select {|x| x}
         
         procs[results.class.to_s.to_sym].call(results) if results            
-        
+
       else
         
         m, xpath_value, index = fn_match.captures        
@@ -526,7 +527,7 @@ class Rexle
       xpath_value = raw_xpath_value.sub('child::','./')
 
       if xpath_value[/^[\w\/]+\s*=.*/] then
-        #@log.debug 'yah'
+
         flag_func = true
 
         xpath_value.sub!(/^\w+\s*=.*/,'.[\0]')
@@ -535,7 +536,7 @@ class Rexle
       end
 
       raw_path, raw_condition = xpath_value.sub(/^\.?\/(?!\/)/,'')\
-          .match(/([^\[]+)(\[[^\]]+\])?/).captures 
+          .match(/([^\[]+)(\[[^\]]+\])?/).captures
 
       remaining_path = ($').to_s
 
@@ -549,7 +550,7 @@ class Rexle
       end
 
       r = raw_path[/^([^\/]+)(?=\/\/)/,1] 
-      
+
       if r then
         a_path = raw_path.split(/(?=\/\/)/,2)
       else
@@ -577,13 +578,16 @@ class Rexle
 
       # isolate the xpath to return just the path to the current element
 
-      elmnt_path = s[/^([\w:\-\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
+      elmnt_path = s[/^([a-zA-Z:\-\*]+\[[^\]]+\])|[\/]+{,2}[^\/]+/]
+
       element_part = elmnt_path[/(^@?[^\[]+)?/,1] if elmnt_path
 
       if element_part then
 
         unless element_part[/^(@|[@\.\w]+[\s=])/] then
           element_name = element_part[/^[\w:\-\*\.]+/]
+          
+          condition = raw_xpath_value unless element_name
 
         else
           if xpath_value[/^\[/] then
@@ -601,7 +605,7 @@ class Rexle
         end
 
       end
-
+      
       #element_name ||= '*'
       raw_condition = '' if condition
 
@@ -655,7 +659,8 @@ class Rexle
 
           remaining_xpath = raw_path[1..-1]
           return remaining_xpath.empty? ? self : self.xpath(remaining_xpath)
-          
+        elsif element_name.nil?
+          return eval attr_search          
         else
 
           return_elements = @child_elements.map.with_index.select do |x, i|
@@ -1017,10 +1022,15 @@ class Rexle
     def format_condition(condition)
 
       raw_items = condition[1..-1].scan(/\'[^\']*\'|\"[^\"]*\"|\
-         and|or|\d+|[!=<>]+|position\(\)|contains\([^\)]+\)|notx\([^\)]+\)|[@\w\.\/&;]+/)
+         and|or|\d+|[!=<>%]+|position\(\)|contains\([^\)]+\)|notx\([^\)]+\)|[@\w\.\/&;]+/)
       
       if raw_items[0][/^\d+$/] then
-        return raw_items[0].to_i
+
+        if condition[0 ] == '[' then
+          return raw_items[0].to_i
+        else
+          return condition
+        end
       elsif raw_items[0] == 'position()' then
 
         rrr = condition[1..-2].gsub(/position\(\)/,'i').gsub('&lt;','<')\
@@ -1181,7 +1191,7 @@ class Rexle
         end
       elsif attr_search[/e\.xpath/] and eval(attr_search)
         block_given? ? blk.call(e) : e
-      elsif attr_search[/^\w+\(/] and e.element(attr_search)
+      elsif attr_search[/^\w*\(/] and e.element(attr_search)
         block_given? ? blk.call(e) : e
       end      
 
