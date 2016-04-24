@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 24-Apr-2016: bug fix: The element text is now enclosed within quotes when 
+#              evaluating an xpath condition. see xpath improvement 23-apr-2016
 # 23-Apr-2016: xpath improvement: Better predicate support 
 #                                 e.g. e.xpath("node != ''")
 #              revision: The previous feature can now include simple 
@@ -698,7 +700,7 @@ class Rexle
 
               if x.text then
 
-                r11 = eval x.text.to_s + right_cond
+                r11 = eval "'%s'%s" % [x.text.to_s, right_cond]
 
               else
                 false
