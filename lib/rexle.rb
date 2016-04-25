@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 25-Apr-2016: bug fix: Rexle::Element#to_a no longer returns a 
+#                       duplicate text value
 # 24-Apr-2016: bug fix: The element text is now enclosed within quotes when 
 #              evaluating an xpath condition. see xpath improvement 23-apr-2016
 # 23-Apr-2016: xpath improvement: Better predicate support 
@@ -1009,7 +1011,7 @@ class Rexle
     alias text= value=
         
     def to_a()
-      e = [String.new(self.name), Hash.new(self.attributes), self.value.to_s]
+      e = [String.new(self.name), Hash.new(self.attributes)]
       [*e, *scan_to_a(self.children)]
     end
 
@@ -1521,10 +1523,10 @@ class Rexle
       super(a)
     end
     
-    def to_doc()
+    def to_doc(root: 'root')
       
       recordset = self.map(&:to_a)
-      Rexle.new(['root',{}, *recordset])
+      Rexle.new([root,{}, *recordset])
     
     end
     
