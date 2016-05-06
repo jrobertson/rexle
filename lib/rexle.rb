@@ -12,6 +12,9 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 06-May-2016: feature: Rexle::Element.text now returns a 
+#                       Rexle::Element::Value object which is a kind of 
+#                       String which be used for comparing numbers
 # 25-Apr-2016: bug fix: Rexle::Element#to_a no longer returns a 
 #                       duplicate text value
 # 24-Apr-2016: bug fix: The element text is now enclosed within quotes when 
@@ -308,6 +311,21 @@ class Rexle
   class Element
     include XMLhelper
     
+    class Value < String
+      
+      def initialize(value)
+        super(value)
+      end
+            
+      def <(val2)
+        self.to_f < val2.to_f
+      end      
+      
+      def >(val2)
+        self.to_f > val2.to_f
+      end            
+    end    
+    
     attr_accessor :name, :value, :parent
     attr_reader :child_elements, :doc_id, :instructions
     
@@ -401,7 +419,7 @@ class Rexle
     
     alias next_sibling next_element
     
-    def notx(bool)
+    def not(bool)
 
       r = self.xpath(bool).any?
 
@@ -443,6 +461,7 @@ class Rexle
 
       # is it a function
       fn_match = path.match(/^(\w+)\(["']?([^\)]*)["']?\)(?:\[(.*)\])?$/)
+      #fn_match = path.match(/^(\w+)\(/)
       #@log.debug 'fn_match : ' + fn_match.inspect
       end_fn_match = path.slice!(/\[\w+\(\)\]$/)
       
@@ -609,6 +628,7 @@ class Rexle
           else
             condition = element_part
             attr_search = format_condition('[' + condition + ']')
+
             #@log.debug 'attr_search : ' + attr_search.inspect
             return [attribute_search(attr_search, \
                                      self, self.attributes) != nil]
@@ -623,6 +643,7 @@ class Rexle
 
       attr_search = format_condition(condition) if condition \
                                                 and condition.length > 0
+
       #@log.debug 'attr_search2 : ' + attr_search.inspect
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
 
@@ -672,11 +693,12 @@ class Rexle
         elsif ename == '.'
 
           remaining_xpath = raw_path[1..-1]
+
           return remaining_xpath.empty? ? self : self.xpath(remaining_xpath)
         elsif element_name.nil?
           return eval attr_search          
         else
-          
+
           if raw_selector.nil? and ename != element_part  then
 
             right_cond = element_part[/#{ename}(.*)/,1]
@@ -806,7 +828,7 @@ class Rexle
     def add_element(item)
 
       if item.is_a? String then
-        @child_elements << String.new(item)
+        @child_elements << Value.new(item)
 
       elsif item.is_a? Rexle::CData then
         @child_elements << item
@@ -954,6 +976,12 @@ class Rexle
     def last(a) a.last                                          end
     def map(&blk)    self.children.map(&blk)                    end        
     def root() self                                             end 
+      
+    # Reserved for future use in Rexle 2.0
+    #
+    def select(name)
+      elements.select {|x| x.name == name}
+    end
 
     def text(s='')
       
@@ -998,7 +1026,7 @@ class Rexle
         
     def value=(raw_s)
 
-      val = String.new(raw_s.to_s.clone)
+      val = Value.new(raw_s.to_s.clone)
       
       escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
       escape_chars.each{|x| val.gsub!(*x)}
@@ -1065,7 +1093,7 @@ class Rexle
     def format_condition(condition)
 
       raw_items = condition.sub(/\[(.*)\]/,'\1').scan(/\'[^\']*\'|\"[^\"]*\"|\
-         and|or|\d+|[!=<>%]+|position\(\)|contains\([^\)]+\)|notx\([^\)]+\)|[@\w\.\/&;]+/)
+         and|or|\d+|[!=<>%]+|position\(\)|contains\([^\)]+\)|not\([^\)]+\)|[@\w\.\/&;]+/)
 
       if raw_items[0][/^\d+$/] then
 
@@ -1082,7 +1110,8 @@ class Rexle
         return rrr
       elsif raw_items[0][/^contains\(/]
         return raw_items[0]
-      elsif  raw_items[0][/^notx\(/]
+      elsif  raw_items[0][/^not\(/]
+
         return raw_items[0]
       else
 
@@ -1143,7 +1172,7 @@ class Rexle
               x
             end
           end
-          
+
           return items.join(' ')
         end
       end
