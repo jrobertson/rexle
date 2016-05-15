@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 15-May-2016: bug fix: Rexle::Element::add_attribute can now handle the 
+#                       object Attribute::Value
 # 06-May-2016: feature: Rexle::Element.text now returns a 
 #                       Rexle::Element::Value object which is a kind of 
 #                       String which be used for comparing numbers
@@ -60,35 +62,6 @@ require 'backtrack-xpath'
 #                       Corrected method scan_to_a() which is used by to_a()
 # 02-May-2015: improvement: Rexle::Element#xpath function contains() can 
 #                          now be used as a condition .e.g. b[contains(c,'10')]
-# 30-Apr-2015: improvement: Rexle::Element#xpath function contains() can 
-#                           now handle string values
-#              feature: Implemented Rexle::Element#backtrack which 
-#                         uses the Backtrack-xpath gem
-# 24-Mar-2015: bug fix: Rexle::Elements no longer allows indexes less than 1
-# 20-Mar-2015: bug fix: Dynarex documents which fail to parse properly with the
-#                          Dynarex parser are now parsed by by the Rexle parser
-# 16-Mar-2015: feature: Implemented Rexle::Element#prepend
-# 09-Mar-2015: feature: Rexle::Element#attributes now returns object 
-#                                                    Attributes instead of Hash
-# 08-Mar-2015: feature: Within Rexle:Elements, 
-#                                     implemented methods length() and empty?()
-# 01-Mar-2015: Rexle::Element#text now reuses the code from 
-#                                                Rexle::Element#value
-# 25-Feb-2015: feature: Rexle#inspect now displays the 
-#                       1st 100 characters of XML
-#              bug fix: If another parser can't be selected, the 
-#                       default parser is used
-# 16-Feb-2015: bug fix: Rexle::Element#value assignment is now made by 
-#                       value instead of reference
-# 11-Feb-2015: bug fix: add_text now adds a String to @child_elements. 
-#                       All references to @child_lookup have now been removed.
-# 08-Feb-2015: bug fix: Within method filter_xpath(), a new String is created 
-#            from raw_path to workaround a frozen string when slice! is called.
-#              bug fix: A Rexle::Element#value will now only return an 
-#                object if the 1st child item is a String
-#              Now stores any comment elements as well as printing them.
-# 07-Feb-2015: Implemented XPath function last() e.g. 
-#                                       doc.root.xpath('records/item[last()]')
 
 
 
@@ -876,14 +849,19 @@ class Rexle
     end
 
     def add_attribute(*x)
-
+      
+      proc_hash = lambda {|x| Hash[*x]}
+      
       procs = {
         Hash: lambda {|x| x[0] || {}},
-        String: lambda {|x| Hash[*x]},
-        Symbol: lambda {|x| Hash[*x]}
+        String: proc_hash,
+        Symbol: proc_hash,
+        :'Attributes::Value' => proc_hash
       }
 
-      h = procs[x[0].class.to_s.to_sym].call(x)
+      type = x[0].class.to_s.to_sym
+
+      h = procs[type].call(x)
 
       @attributes.merge! h
     end
