@@ -12,7 +12,10 @@ require 'backtrack-xpath'
 
 # modifications:
 
-# 21-May-2016: design fix: When an attribute is specified within an XPath, a 
+# 21-May-2016: bug fix: If an xpath containing and attribute only is passed 
+#                       into method Rexle::Element#text it will now call the 
+#                       attribute's value
+#              design fix: When an attribute is specified within an XPath, a 
 #                          Rexle::Element::Attribute object is now returned
 # 15-May-2016: bug fix: Rexle::Element::add_attribute can now handle the 
 #                       object Attribute::Value
@@ -593,8 +596,11 @@ class Rexle
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
   
         return @attributes  if attribute == '*'
-        return [Attribute.new(@attributes[attribute.to_sym])] if attribute \
-                  and @attributes and @attributes.has_key?(attribute.to_sym)
+        
+        if attribute and @attributes and \
+              @attributes.has_key?(attribute.to_sym) then
+          return [Attribute.new(@attributes[attribute.to_sym])]
+        end
         s = a_path.shift
       end      
 
@@ -976,12 +982,6 @@ class Rexle
     def last(a) a.last                                          end
     def map(&blk)    self.children.map(&blk)                    end        
     def root() self                                             end 
-      
-    # Reserved for future use in Rexle 2.0
-    #
-    def select(name)
-      elements.select {|x| x.name == name}
-    end
 
     def text(s='')
       
@@ -990,7 +990,7 @@ class Rexle
       e = self.element(s)
       return e if e.is_a? String
       
-      e.text if e
+      e.value if e
     end
     
     def texts()
