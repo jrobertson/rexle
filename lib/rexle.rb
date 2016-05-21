@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 21-May-2016: design fix: When an attribute is specified within an XPath, a 
+#                          Rexle::Element::Attribute object is now returned
 # 15-May-2016: bug fix: Rexle::Element::add_attribute can now handle the 
 #                       object Attribute::Value
 # 06-May-2016: feature: Rexle::Element.text now returns a 
@@ -297,7 +299,27 @@ class Rexle
       def >(val2)
         self.to_f > val2.to_f
       end            
-    end    
+    end   
+    
+    class Attribute
+      
+      attr_reader :value
+      
+      def initialize(value)
+        @value = value
+      end
+      
+      def to_f()
+        @value.to_f
+      end      
+      
+      def to_i()
+        @value.to_i
+      end
+      
+      alias to_s value
+        
+    end
     
     attr_accessor :name, :value, :parent
     attr_reader :child_elements, :doc_id, :instructions
@@ -360,7 +382,7 @@ class Rexle
     end    
     
     def max(path) 
-      a = query_xpath(path).flatten.select{|x| x.is_a? String}.map(&:to_i)
+      a = query_xpath(path).flatten.select{|x| x.is_a? String or x.is_a? Rexle::Element::Attribute}.map(&:to_i)
       a.max 
     end
       
@@ -571,7 +593,7 @@ class Rexle
         attribute = xpath_value[/^(attribute::|@)(.*)/,2] 
   
         return @attributes  if attribute == '*'
-        return [@attributes[attribute.to_sym]] if attribute \
+        return [Attribute.new(@attributes[attribute.to_sym])] if attribute \
                   and @attributes and @attributes.has_key?(attribute.to_sym)
         s = a_path.shift
       end      
@@ -1135,7 +1157,7 @@ class Rexle
                   path, value = x.values_at(0,-1)
                   
                   if x[0][/@\w+$/] then
-                    "r = e.xpath('#{path}').first; r and r == #{value}"
+                    "r = e.xpath('#{path}').first; r and r.value == #{value}"
                   else
                     "r = e.xpath('#{path}').first; r and r.value == #{value}"
                   end
@@ -1213,7 +1235,7 @@ class Rexle
     end
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
-      
+
       r2 = if attr_search.is_a? Fixnum then
         block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s(?:<|>|==|%)\s\d+/] and eval(attr_search) then
