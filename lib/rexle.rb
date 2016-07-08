@@ -286,7 +286,7 @@ class Rexle
       @doc.root.xpath RexleCSS.new(x).to_xpath
     end
     
-    a.shift if self.class.to_s =~ /Rexle$/
+    a.shift if self.kind_of? Rexle
     
     return a
   end
