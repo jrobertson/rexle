@@ -12,6 +12,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 08-Jul-2016: bug fix: Dynarex#css will no longer return the Rexle 
+#                       object in the results e.g. doc.css '*'
 # 21-May-2016: bug fix: If an xpath containing and attribute only is passed 
 #                       into method Rexle::Element#text it will now call the 
 #                       attribute's value
@@ -279,7 +281,14 @@ class Rexle
   end  
   
   def css(selector)
-    selector.split(',').flat_map{|x| @doc.root.xpath RexleCSS.new(x).to_xpath}
+    
+    a = selector.split(',').flat_map do |x| 
+      @doc.root.xpath RexleCSS.new(x).to_xpath
+    end
+    
+    a.shift if self.class.to_s =~ /Rexle$/
+    
+    return a
   end
   
   def xpath(path,  &blk)
