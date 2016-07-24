@@ -3,8 +3,8 @@
 # file: rexle.rb
 
 require 'rexleparser'
-require 'dynarex-parser'
-require 'polyrex-parser'
+#jr240716 require 'dynarex-parser'
+#jr240716 require 'polyrex-parser'
 require 'rexle-css'
 require 'cgi'
 require 'backtrack-xpath'
@@ -12,6 +12,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 24-Aug-2016: bug fix: Replaced the Dynarex parser with the native parser
 # 08-Jul-2016: bug fix: Dynarex#css will no longer return the Rexle 
 #                       object in the results e.g. doc.css '*'
 # 21-May-2016: bug fix: If an xpath containing and attribute only is passed 
@@ -1476,7 +1477,8 @@ class Rexle
 
       if recordx_type then
         procs = {
-          'dynarex' => proc {|x| DynarexParser.new(x).to_a},
+          #'dynarex' => proc {|x| DynarexParser.new(x).to_a},
+          'dynarex' => proc {|x| parse_rexle(x)},
           #'polyrex' => proc {|x| PolyrexParser.new(x).to_a},
           'polyrex' => proc {|x| parse_rexle(x)}
         }
