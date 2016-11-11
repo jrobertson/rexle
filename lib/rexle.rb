@@ -11,7 +11,8 @@ require 'backtrack-xpath'
 
 
 # modifications:
-
+# 11-Nov-2016: bug fix: escaped string using double quotes instead regarding 
+#                       attr_search
 # 24-Aug-2016: bug fix: Replaced the Dynarex parser with the native parser
 # 08-Jul-2016: bug fix: Dynarex#css will no longer return the Rexle 
 #                       object in the results e.g. doc.css '*'
@@ -1172,7 +1173,7 @@ class Rexle
                     "r = e.xpath('#{path}').first; r and r.value == #{value}"
                   end
                 else
-                  "(name == '%s' and value %s '%s')" % [x[0], x[1], \
+                  "(name == '%s' and value %s \"%s\")" % [x[0], x[1], \
                                              x[2].sub(/^['"](.*)['"]$/,'\1')]
                 end
               else
