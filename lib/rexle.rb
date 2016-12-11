@@ -11,6 +11,7 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 11-Dec-2016: backtrack improvement: The usage of attributes (ID, or class) in the returned XPath is now optional
 # 11-Nov-2016: bug fix: escaped string using double quotes instead regarding 
 #                       attr_search
 # 24-Aug-2016: bug fix: Replaced the Dynarex parser with the native parser
@@ -59,20 +60,6 @@ require 'backtrack-xpath'
 # 09-Mar-2016: bug fix: '.' now returns the current element
 # 02-Mar-2016: improvement: When handling the HTML element iframe, it 
 #                                    is no longer printed as a self-closing tag
-# 05-Nov-2015: bug fix: UTF-8 encoding is now enforced when 
-#                                              preparing the XML for output
-# 15-Sep-2015: improvement: When handling the HTML element textarea, it 
-#                                    is no longer printed as a self-closing tag
-# 25-May-2015: bug fix: If a Polyrex XML string is being parsed then the  
-#                                       XML instructions will also now be read.
-# 11-May-2015: improvement: when Rexle::Element#delete is passed an XPath it 
-#         will now delete all elements found, not just the first element found.
-# 10-May-2015: bug fix: Rexle::Element#to_a now correctly returns an array
-#                       Corrected method scan_to_a() which is used by to_a()
-# 02-May-2015: improvement: Rexle::Element#xpath function contains() can 
-#                          now be used as a condition .e.g. b[contains(c,'10')]
-
-
 
 
 module XMLhelper
@@ -353,8 +340,8 @@ class Rexle
 
     end
     
-    def backtrack()
-      BacktrackXPath.new(self)
+    def backtrack(use_attributes: true)
+      BacktrackXPath.new(self, use_attributes: use_attributes)
     end
     
     def cdata?()
