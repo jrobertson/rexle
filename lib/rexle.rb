@@ -11,6 +11,7 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 25-Dec-2016: revision for Ruby 2.4: Replaced Fixnum with Integer
 # 11-Dec-2016: backtrack improvement: The usage of attributes (ID, or class) in the returned XPath is now optional
 # 11-Nov-2016: bug fix: escaped string using double quotes instead regarding 
 #                       attr_search
@@ -1234,7 +1235,7 @@ class Rexle
 
     def attribute_search(attr_search, e, h, i=nil, &blk)
 
-      r2 = if attr_search.is_a? Fixnum then
+      r2 = if attr_search.is_a? Integer then
         block_given? ? blk.call(e) : e if i == attr_search 
       elsif attr_search[/i\s(?:<|>|==|%)\s\d+/] and eval(attr_search) then
         block_given? ? blk.call(e) : e        
