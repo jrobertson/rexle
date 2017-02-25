@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '1.4.3'
+  s.version = '1.4.4'
   s.summary = 'Rexle is an XML parser written purely in Ruby'
   s.files = Dir['lib/rexle.rb']
   s.authors = ['James Robertson']
@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency('rexle-css', '~> 0.1', '>=0.1.5')
   s.add_runtime_dependency('backtrack-xpath', '~> 0.1', '>=0.1.8') 
   s.license = 'MIT'
-  s.email = 'james@r0bertson.co.uk'
+  s.email = 'james@jamesrobertson.eu'
   s.homepage = 'https://github.com/jrobertson/rexle'
   s.required_ruby_version = '>= 2.1.0'
 end
