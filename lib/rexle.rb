@@ -11,6 +11,11 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 13-Apr-2017: bug fix: Rexle::Elements#index was implemented which fixes the 
+#         Rexle::Element#next_sibling and Rexle::Element#previous_sibling  bugs
+# 25-Feb-2017: improvement: 
+#                       An input rexle array can now have an empty array for 
+#                       children e.g. doc = Rexle.new(["records", {}, "", []])
 # 25-Dec-2016: revision for Ruby 2.4: Replaced Fixnum with Integer
 # 11-Dec-2016: backtrack improvement: The usage of attributes (ID, or class) in the returned XPath is now optional
 # 11-Nov-2016: bug fix: escaped string using double quotes instead regarding 
@@ -126,7 +131,7 @@ module XMLhelper
 
         tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
         
-        non_self_closing_tags = %w(script textarea iframe div)
+        non_self_closing_tags = %w(script textarea iframe div object)
 
         if  (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or \
@@ -407,10 +412,10 @@ class Rexle
     def next_element()      
 
       id  = self.object_id
-      a = self.parent.child_elements      
-      i = a.index {|x| x.object_id == id} + 1
-      
-      a[i] if  i < a.length
+      a = self.parent.elements      
+
+      i = a.index {|x| x.object_id == id} + 2
+      a[i] if  i < a.length + 1
         
     end
     
@@ -426,9 +431,9 @@ class Rexle
     def previous_element()      
       
       id  = self.object_id
-      a = self.parent.child_elements      
-      i = a.index {|x| x.object_id == id} - 1
-      
+      a = self.parent.elements      
+      i = a.index {|x| x.object_id == id}
+
       a[i] if  i >= 0 
 
     end
@@ -1349,6 +1354,16 @@ class Rexle
     
     def each(&blk) @elements.each(&blk)  end
     def empty?()   @elements.empty?      end
+    
+    def index(e=nil, &blk)
+      
+      if block_given? then
+        @elements.index(&blk)
+      else
+        @elements.index e
+      end
+    end
+    
     def length()   @elements.length      end
     def to_a()     @elements             end
       
@@ -1500,8 +1515,10 @@ class Rexle
 
   end
     
-  def scan_element(name, attributes=nil, *children)
-
+  def scan_element(name=nil, attributes=nil, *children)
+    
+    return unless name
+    
     return Rexle::CData.new(children.first) if name == '!['
     return Rexle::Comment.new(children.first) if name == '!-'
 
