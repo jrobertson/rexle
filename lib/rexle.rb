@@ -14,6 +14,7 @@ require 'backtrack-xpath'
 # 10-Aug-2017: feature: Rexle now has a member variable (@rexle) to keep 
 #              track of the working document when elements are passed to 
 #                                different documents
+#              bug fix: Element prefixes are now only processed if they exist
 # 13-Apr-2017: bug fix: Rexle::Elements#index was implemented which fixes the 
 #         Rexle::Element#next_sibling and Rexle::Element#previous_sibling  bugs
 # 25-Feb-2017: improvement: 
@@ -399,7 +400,7 @@ class Rexle
       
     def name()
       
-      if @rexle then
+      if @rexle and @rexle.respond_to? :prefixes then
         
         if @rexle.prefixes.is_a? Array then
           prefix = @rexle.prefixes.find {|x| x == @name[/^(\w+):/,1] } 

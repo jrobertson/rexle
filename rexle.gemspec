@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rexle'
-  s.version = '1.4.6'
+  s.version = '1.4.7'
   s.summary = 'Rexle is an XML parser written purely in Ruby'
   s.files = Dir['lib/rexle.rb']
   s.authors = ['James Robertson']
