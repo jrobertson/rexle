@@ -11,6 +11,9 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 10-Aug-2017: feature: Rexle now has a member variable (@rexle) to keep 
+#              track of the working document when elements are passed to 
+#                                different documents
 # 13-Apr-2017: bug fix: Rexle::Elements#index was implemented which fixes the 
 #         Rexle::Element#next_sibling and Rexle::Element#previous_sibling  bugs
 # 25-Feb-2017: improvement: 
@@ -233,8 +236,9 @@ class Rexle
   attr_reader :prefixes, :doctype
   attr_accessor :instructions
   
-  def initialize(x=nil)
+  def initialize(x=nil, rexle: self)
 
+    @rexle = rexle
     super()
 
     @instructions = [["xml", "version='1.0' encoding='UTF-8'"]] 
@@ -333,7 +337,7 @@ class Rexle
     
     alias original_clone clone
 
-    def initialize(name=nil, value: nil, attributes: Attributes.new, rexle: nil)
+    def initialize(name=nil, value: nil, attributes: Attributes.new, rexle: self)
 
       @rexle = rexle      
       super()
@@ -434,7 +438,7 @@ class Rexle
       a = self.parent.elements      
       i = a.index {|x| x.object_id == id}
 
-      a[i] if  i >= 0 
+      a[i] if  i > 0 
 
     end
     
@@ -1522,7 +1526,7 @@ class Rexle
     return Rexle::CData.new(children.first) if name == '!['
     return Rexle::Comment.new(children.first) if name == '!-'
 
-    element = Rexle::Element.new(name, attributes: attributes, rexle: self)  
+    element = Rexle::Element.new(name, attributes: attributes, rexle: @rexle)  
 
     if children then
 
