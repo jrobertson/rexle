@@ -11,6 +11,7 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 10-Sep-2017: bug fix: The following XPath has now been tested => //.[@id]
 # 10-Aug-2017: feature: Rexle now has a member variable (@rexle) to keep 
 #              track of the working document when elements are passed to 
 #                                different documents
@@ -704,7 +705,19 @@ class Rexle
 
           remaining_xpath = raw_path[1..-1]
 
-          return remaining_xpath.empty? ? self : self.xpath(remaining_xpath)
+          if remaining_xpath.empty? then
+            if xpath_value.length > 0 and xpath_value =~ /\[/ then
+
+                r = eval(attr_search.sub(/^h/,'self.attributes'))
+                return self if r 
+
+            else
+              return self
+            end
+          else
+            return self.xpath(remaining_xpath)
+          end          
+
         elsif element_name.nil?
           return eval attr_search          
         else
@@ -866,6 +879,7 @@ class Rexle
           new_item = item.deep_clone
           add_element new_item
           item.delete
+          item = nil
           item = new_item
           new_item
         else
@@ -951,7 +965,7 @@ class Rexle
 
         if obj.is_a? String then
           
-          self.xpath(obj).each {|e| e.delete}
+          self.xpath(obj).each {|e| e.delete; e = nil}
           
         else
 
@@ -1418,7 +1432,7 @@ class Rexle
 
   def delete(xpath)
 
-    @doc.xpath(xpath).each {|e| e.delete }
+    @doc.xpath(xpath).each {|e| e.delete; e = nil }
 
   end
   
