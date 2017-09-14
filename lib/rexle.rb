@@ -11,6 +11,8 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 14-Sep-2017: improvement: An *and* operator can now be 
+#                           used between xpath statements
 # 10-Sep-2017: bug fix: The following XPath has now been tested => //.[@id]
 # 10-Aug-2017: feature: Rexle now has a member variable (@rexle) to keep 
 #              track of the working document when elements are passed to 
@@ -525,10 +527,18 @@ class Rexle
           :"Rexle::Element" => proc {|x| [x]}
         }
         bucket = []
-        raw_results = path.split('|').map do |xp|
-          query_xpath(xp.strip, bucket, &blk)         
-        end
+        
+        if path =~ /[\[]|\(/ then
 
+          raw_results = path.split(/\|/).map do |xp|
+            query_xpath(xp.strip, bucket, &blk)         
+          end
+        else
+          raw_results = path.split(/ *(?:\||\band\b) */).map do |xp|
+            query_xpath(xp.strip, bucket, &blk)         
+          end          
+        end
+        
         return [true] if !path[/[><]/] and raw_results.flatten.index(true)
         results = raw_results # .flatten.select {|x| x}
         
