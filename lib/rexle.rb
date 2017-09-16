@@ -11,6 +11,8 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 16-Sep-2017: improvement: Multiple results are now returned if the 
+#                           xpath contains an *and* operator
 # 14-Sep-2017: improvement: An *and* operator can now be 
 #                           used between xpath statements
 # 10-Sep-2017: bug fix: The following XPath has now been tested => //.[@id]
@@ -528,18 +530,29 @@ class Rexle
         }
         bucket = []
         
-        if path =~ /[\[]|\(/ then
+        results = if path =~ /[\[]|\(/ then
 
           raw_results = path.split(/\|/).map do |xp|
             query_xpath(xp.strip, bucket, &blk)         
           end
+
+          raw_results.flatten.index(true) ? [true] : []
+          
         else
           raw_results = path.split(/ *(?:\||\band\b) */).map do |xp|
             query_xpath(xp.strip, bucket, &blk)         
           end          
+
+          if path =~ / and / then
+
+            raw_results.flatten.select {|x| x == true or x == false}            
+
+          else
+            raw_results.flatten.index(true) ? [true] : []
+          end
         end
-        
-        return [true] if !path[/[><]/] and raw_results.flatten.index(true)
+
+        return results if !path[/[><]/] and results.any?
         results = raw_results # .flatten.select {|x| x}
         
         procs[results.class.to_s.to_sym].call(results) if results            
