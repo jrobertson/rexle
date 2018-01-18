@@ -11,6 +11,7 @@ require 'backtrack-xpath'
 
 
 # modifications:
+# 18-Jan-2018: bug fix: An Element's attributes are now cloned too 
 # 16-Sep-2017: improvement: Multiple results are now returned if the 
 #                           xpath contains an *and* operator
 # 14-Sep-2017: improvement: An *and* operator can now be 
@@ -26,55 +27,6 @@ require 'backtrack-xpath'
 #                       An input rexle array can now have an empty array for 
 #                       children e.g. doc = Rexle.new(["records", {}, "", []])
 # 25-Dec-2016: revision for Ruby 2.4: Replaced Fixnum with Integer
-# 11-Dec-2016: backtrack improvement: The usage of attributes (ID, or class) in the returned XPath is now optional
-# 11-Nov-2016: bug fix: escaped string using double quotes instead regarding 
-#                       attr_search
-# 24-Aug-2016: bug fix: Replaced the Dynarex parser with the native parser
-# 08-Jul-2016: bug fix: Dynarex#css will no longer return the Rexle 
-#                       object in the results e.g. doc.css '*'
-# 21-May-2016: bug fix: If an xpath containing and attribute only is passed 
-#                       into method Rexle::Element#text it will now call the 
-#                       attribute's value
-#              design fix: When an attribute is specified within an XPath, a 
-#                          Rexle::Element::Attribute object is now returned
-# 15-May-2016: bug fix: Rexle::Element::add_attribute can now handle the 
-#                       object Attribute::Value
-# 06-May-2016: feature: Rexle::Element.text now returns a 
-#                       Rexle::Element::Value object which is a kind of 
-#                       String which be used for comparing numbers
-# 25-Apr-2016: bug fix: Rexle::Element#to_a no longer returns a 
-#                       duplicate text value
-# 24-Apr-2016: bug fix: The element text is now enclosed within quotes when 
-#              evaluating an xpath condition. see xpath improvement 23-apr-2016
-# 23-Apr-2016: xpath improvement: Better predicate support 
-#                                 e.g. e.xpath("node != ''")
-#              revision: The previous feature can now include simple 
-#                        predicate logic e.g. 2 < 5
-# 22-Apr-2016: feature: Using an XPath A pure logic predicate can now be 
-#                       processed e.g. (4 % 1) != 1
-# 21-Apr-2016: feature: The xpath() method now returns a Rexle::Recordset object 
-#                       which itself can be treat as a Rexle document
-#              An xpath predicate can now contain the mod operator as well as 
-#              containing nested logic  e.g. [(position() mod 2) == 1]
-# 16-Apr-2016: improvement: The HTML element div is no longer printed as 
-#                           a self-closing tag if empty
-# 04-Apr-2016: bug fix: modified the bug fix from the 15-Mar-2016 to 
-#              validate on a function name only within the variable attr_search
-#              minor improvement: Added a new line character between 
-#                                 XML processing instructions
-# 28-Mar-2016: minor feature:  the name of an attribute can now be 
-#                              passed into Rexle::Element#text
-# 15-Mar-2016: bug fix: Reapplied a select case statement (which had 
-#                     subsequently been deleted) from method attribute_search()
-# 13-Mar-2016: bug fix: Reapplied a statement that was commented out in 
-#                       the previous gem release
-#              bug fix: Removed a redundant statement from 
-#                       method attribute_search()
-# 12-Mar-2016: A predicate can now handle position() with the 
-#                              equality operator e.g. b[position() = 2]
-# 09-Mar-2016: bug fix: '.' now returns the current element
-# 02-Mar-2016: improvement: When handling the HTML element iframe, it 
-#                                    is no longer printed as a self-closing tag
 
 
 module XMLhelper
@@ -396,7 +348,12 @@ class Rexle
 
       selector.split(',')\
                   .flat_map{|x| self.root.xpath RexleCSS.new(x).to_xpath}
-    end    
+    end
+
+    # not yet implemented
+    def lowercase(s)
+
+    end
     
     def max(path) 
       a = query_xpath(path).flatten.select{|x| x.is_a? String or x.is_a? Rexle::Element::Attribute}.map(&:to_i)
@@ -979,7 +936,7 @@ class Rexle
     def deep_clone() Rexle.new(self.xml).root end
       
     def clone() 
-      Element.new(@name, attributes: @attributes) 
+      Element.new(@name, attributes: @attributes.clone) 
     end
           
     def delete(obj=nil)
@@ -1159,6 +1116,7 @@ class Rexle
       elsif  raw_items[0][/^not\(/]
 
         return raw_items[0]
+ 
       else
 
         andor_items = raw_items.map.with_index\
