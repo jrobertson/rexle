@@ -210,7 +210,7 @@ class Rexle
         RexleParser: ->(x){ parse_rexle(x)}
       }
       
-      doc_node = ['doc',Attributes.new]
+      doc_node = ['doc', Attributes.new]
   
       @a = procs[x.class.to_s.to_sym].call(x)
       
@@ -936,7 +936,7 @@ class Rexle
     def deep_clone() Rexle.new(self.xml).root end
       
     def clone() 
-      Element.new(@name, attributes: @attributes.clone) 
+      Element.new(@name, attributes: Marshal.load( Marshal.dump(@attributes))) 
     end
           
     def delete(obj=nil)
