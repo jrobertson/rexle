@@ -11,6 +11,8 @@ require 'backtrack-xpath'
 
 
 # modifications:
+
+# 02-Oct-2018: feature: Added Rexle::Elements#last
 # 18-Jan-2018: bug fix: An Element's attributes are now cloned too 
 # 16-Sep-2017: improvement: Multiple results are now returned if the 
 #                           xpath contains an *and* operator
@@ -194,9 +196,12 @@ class Rexle
   attr_reader :prefixes, :doctype
   attr_accessor :instructions
   
-  def initialize(x=nil, rexle: self)
+  def initialize(x=nil, rexle: self, debug: false)
 
-    @rexle = rexle
+    @rexle, @debug = rexle, debug
+    
+    puts 'inside Rexle' if debug
+    
     super()
 
     @instructions = [["xml", "version='1.0' encoding='UTF-8'"]] 
@@ -1364,6 +1369,7 @@ class Rexle
       end
     end
     
+    def last()     @elements.last        end
     def length()   @elements.length      end
     def to_a()     @elements             end
       
