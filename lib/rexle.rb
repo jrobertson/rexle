@@ -7,11 +7,13 @@ require 'rexleparser'
 #jr240716 require 'polyrex-parser'
 require 'rexle-css'
 require 'cgi'
+require 'c32'
 require 'backtrack-xpath'
 
 
 # modifications:
 
+# 03-Nov-2018: feature: Debug messages can now easily used coloured text
 # 02-Oct-2018: feature: Added Rexle::Elements#last
 # 18-Jan-2018: bug fix: An Element's attributes are now cloned too 
 # 16-Sep-2017: improvement: Multiple results are now returned if the 
@@ -192,6 +194,7 @@ end
 
 class Rexle
   include XMLhelper
+  using ColouredText
 
   attr_reader :prefixes, :doctype
   attr_accessor :instructions
@@ -200,7 +203,7 @@ class Rexle
 
     @rexle, @debug = rexle, debug
     
-    puts 'inside Rexle' if debug
+    puts 'inside Rexle'.debug if debug
     
     super()
 
