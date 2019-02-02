@@ -13,7 +13,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
-# 03-Nov-2018: feature: Debug messages can now easily used coloured text
+# 02-Feb-2019: feature: A comment tag can now have nested elements
+# 03-Nov-2018: feature: Debug messages can now use coloured text
 # 02-Oct-2018: feature: Added Rexle::Elements#last
 # 18-Jan-2018: bug fix: An Element's attributes are now cloned too 
 # 16-Sep-2017: improvement: Multiple results are now returned if the 
@@ -1326,10 +1327,21 @@ class Rexle
     
   end
   
+  
   class Comment
     
+
     def initialize(val='')
+      @e = Element.new('_').add_text val
       @value = val
+    end
+    
+    def add_element(e2)
+      @e.add e2
+    end
+    
+    def add_text(t)
+      @e.add_text t
     end
     
     def inspect()
@@ -1337,9 +1349,13 @@ class Rexle
     end
     
     def print()
-      "<!--%s-->" % @value
+      "<!--%s-->" % @e.root.xpath('//./text()').join
     end
     
+    def texts()
+      @e.texts
+    end
+        
     def to_s()
       @value
     end
