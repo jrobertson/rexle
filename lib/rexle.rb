@@ -13,6 +13,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 09-Jul-2019: minor improvement: A comment tag now has a 
+#              new line when pretty printed
 # 02-Feb-2019: feature: A comment tag can now have nested elements
 # 03-Nov-2018: feature: Debug messages can now use coloured text
 # 02-Oct-2018: feature: Added Rexle::Elements#last
@@ -184,7 +186,7 @@ module XMLhelper
 
       elsif x.is_a? String then  x.sub(/^[\n\s]+$/,'')
       elsif x.is_a? Rexle::CData then x.print        
-      elsif x.is_a? Rexle::Comment then x.print           
+      elsif x.is_a? Rexle::Comment then "\n" + (' ' * indent) + x.print           
 
       end
     end
