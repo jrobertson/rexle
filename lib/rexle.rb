@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 18-Sep-2019: minor bug fix: &apos is now unescaped properly 
 # 09-Jul-2019: minor improvement: A comment tag now has a 
 #              new line when pretty printed
 # 02-Feb-2019: feature: A comment tag can now have nested elements
@@ -1016,7 +1017,7 @@ class Rexle
       r.map do |x|
         def x.unescape()
           s = self.to_s.clone
-          %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
+          %w(&lt; < &gt; > &amp; & &apos; ').each_slice(2){|x| s.gsub!(*x)}
           s
         end            
       end
@@ -1031,7 +1032,7 @@ class Rexle
       
       def r.unescape()
         s = self.clone
-        %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
+        %w(&lt; < &gt; > &amp; & &apos; ').each_slice(2){|x| s.gsub!(*x)}
         s
       end     
       
@@ -1323,7 +1324,7 @@ class Rexle
     
     def unescape()
       s = @value.clone
-      %w(&lt; < &gt; > &amp; & &pos; ').each_slice(2){|x| s.gsub!(*x)}
+      %w(&lt; < &gt; > &amp; & &apos; ').each_slice(2){|x| s.gsub!(*x)}
       s
     end    
     
