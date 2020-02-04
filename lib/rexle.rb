@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 04-Feb-2020: minor bug fix: Element A is now defined as a non self-closing tag
 # 18-Sep-2019: minor bug fix: &apos is now unescaped properly 
 # 09-Jul-2019: minor improvement: A comment tag now has a 
 #              new line when pretty printed
@@ -100,7 +101,7 @@ module XMLhelper
 
         tag = x.name + (a.empty? ? '' : ' ' + a.join(' '))
         
-        non_self_closing_tags = %w(script textarea iframe div object)
+        non_self_closing_tags = %w(script textarea iframe div object a)
 
         if  (x.children and x.children.length > 0 \
             and not x.children.is_an_empty_string?) or \
@@ -206,6 +207,7 @@ class Rexle
   def initialize(x=nil, rexle: self, debug: false)
 
     @rexle, @debug = rexle, debug
+    $debug = @debug
     
     puts 'inside Rexle'.debug if debug
     
@@ -647,6 +649,7 @@ class Rexle
       attr_search = format_condition(condition) if condition \
                                                 and condition.length > 0
 
+      puts ('1. attr_search: ' + attr_search.inspect).debug if $debug
       #@log.debug 'attr_search2 : ' + attr_search.inspect
       attr_search2 = xpath_value[/^\[(.*)\]$/,1]
 
@@ -711,6 +714,7 @@ class Rexle
           end          
 
         elsif element_name.nil?
+          puts ('attr_search: ' + attr_search.inspect).debug if $debug
           return eval attr_search          
         else
 
@@ -1043,7 +1047,7 @@ class Rexle
 
       val = Value.new(raw_s.to_s.clone)
       
-      escape_chars = %w(& &amp; < &lt; > &gt;).each_slice(2).to_a
+      escape_chars = %w(& &amp; ' &apos; < &lt; > &gt;).each_slice(2).to_a
       escape_chars.each{|x| val.gsub!(*x)}
 
       t = val
