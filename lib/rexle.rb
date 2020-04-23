@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 23-Apr-2020: feature: Added public method *plaintext*.
 # 04-Feb-2020: minor bug fix: Element A is now defined as a non self-closing tag
 # 18-Sep-2019: minor bug fix: &apos is now unescaped properly 
 # 09-Jul-2019: minor improvement: A comment tag now has a 
@@ -1000,6 +1001,11 @@ class Rexle
     def insert_before(node)  insert(node)                       end
     def last(a) a.last                                          end
     def map(&blk)    self.children.map(&blk)                    end        
+      
+    def plaintext()
+      xml().gsub(/<\/?[^>]+>/,'').gsub('&nbsp;',' ').gsub(/\n\s+/,' ')
+    end
+    
     def root() self                                             end 
 
     def text(s='')
