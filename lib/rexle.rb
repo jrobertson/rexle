@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 11-May-2020: bug fix: Rexle#css now responds correctly to valid selectors
 # 23-Apr-2020: feature: Added public method *plaintext*.
 # 04-Feb-2020: minor bug fix: Element A is now defined as a non self-closing tag
 # 18-Sep-2019: minor bug fix: &apos is now unescaped properly 
@@ -257,9 +258,7 @@ class Rexle
     a = selector.split(',').flat_map do |x| 
       @doc.root.xpath RexleCSS.new(x).to_xpath
     end
-    
-    a.shift if self.kind_of? Rexle
-    
+        
     return a
   end
   
