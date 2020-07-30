@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 30-Jul-2020: minor improvement: #plaintext now unescapes &amp; to &
 # 11-May-2020: bug fix: Rexle#css now responds correctly to valid selectors
 # 23-Apr-2020: feature: Added public method *plaintext*.
 # 04-Feb-2020: minor bug fix: Element A is now defined as a non self-closing tag
@@ -1002,7 +1003,8 @@ class Rexle
     def map(&blk)    self.children.map(&blk)                    end        
       
     def plaintext()
-      xml().gsub(/<\/?[^>]+>/,'').gsub('&nbsp;',' ').gsub(/\n\s+/,' ')
+      xml().gsub(/<\/?[^>]+>/,'').gsub('&amp;','&').gsub('&nbsp;',' ')\
+          .gsub(/\n\s+/,' ')
     end
     
     def root() self                                             end 
