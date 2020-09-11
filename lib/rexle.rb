@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 11-Sep-2020: feature: Rexle::Element#text now has unescaped HTML using CGI
 # 30-Jul-2020: minor improvement: #plaintext now unescapes &amp; to &
 # 11-May-2020: bug fix: Rexle#css now responds correctly to valid selectors
 # 23-Apr-2020: feature: Added public method *plaintext*.
@@ -1003,7 +1004,7 @@ class Rexle
     def map(&blk)    self.children.map(&blk)                    end        
       
     def plaintext()
-      xml().gsub(/<\/?[^>]+>/,'').gsub('&amp;','&').gsub('&nbsp;',' ')\
+      CGI.unescapeHTML xml().gsub(/<\/?[^>]+>/,'').gsub('&nbsp;',' ')\
           .gsub(/\n\s+/,' ')
     end
     
