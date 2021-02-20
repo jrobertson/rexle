@@ -13,6 +13,7 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 20-Feb-2021: bug fix: The @instructions accessor is now ignored if nil
 # 11-Sep-2020: feature: Rexle::Element#text now has unescaped HTML using CGI
 # 30-Jul-2020: minor improvement: #plaintext now unescapes &amp; to &
 # 11-May-2020: bug fix: Rexle#css now responds correctly to valid selectors
@@ -1488,7 +1489,7 @@ class Rexle
 
     if o[:declaration] == true then
 
-      unless @instructions.assoc 'xml' then
+      unless @instructions and @instructions.assoc 'xml' then
         @instructions.unshift ["xml","version='1.0' encoding='UTF-8'"]
       end
     end
