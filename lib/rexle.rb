@@ -13,7 +13,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
-# 20-Feb-2021: bug fix: The @instructions accessor is now ignored if nil
+# 03-Apr-2021: bug fix: Using *to_a* a CDATA element if present is now output
+# 20-Feb-2021: bug fix: The @instructions accessor is now ignored if nil.
 # 11-Sep-2020: feature: Rexle::Element#text now has unescaped HTML using CGI
 # 30-Jul-2020: minor improvement: #plaintext now unescapes &amp; to &
 # 11-May-2020: bug fix: Rexle#css now responds correctly to valid selectors
@@ -139,7 +140,11 @@ module XMLhelper
 
       if x.is_a? Rexle::Element then
 
-        a = [String.new(x.name), Hash.new(x.attributes), x.value.to_s]
+        a = [String.new(x.name), Hash.new(x.attributes), x.value.to_s]        
+
+        if x.cdatas.any? then        
+          a.concat x.cdatas.map {|cdata| ['![', {}, cdata] }
+        end        
 
         (a.concat(scan_to_a(x.children))) if x.children.length > 1
         r << a
@@ -1067,7 +1072,13 @@ class Rexle
     alias text= value=
         
     def to_a()
+    
       e = [String.new(self.name), Hash.new(self.attributes)]
+      
+      if self.cdatas.any? then        
+        e.concat self.cdatas.map {|cdata| ['![', {}, cdata] }
+      end        
+      
       [*e, *scan_to_a(self.children)]
     end
 
