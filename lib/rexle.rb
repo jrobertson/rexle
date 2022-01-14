@@ -13,6 +13,8 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 14-Jan-2022: bug fix: Related to previous bug fix; Unescape is
+#                       now only applied to objects of type Attributes::Value
 # 01-Jan-2022: bug fix: Attribute values are no longer unescaped when
 #                       called from Rexle#xml
 # 03-Apr-2021: bug fix: Using *to_a* a CDATA element if present is now output
@@ -55,7 +57,14 @@ module XMLhelper
                           scan_print(children).join.force_encoding("utf-8")
 
     a = self.root.attributes.to_a.map do |k,v|
-      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v.to_s(unescape: false))]
+
+      val = if v.is_a?(Array) then
+        v.join(' ')
+      else
+        v.is_a?(String) ? v : v.to_s(unescape: false)
+      end
+
+      "%s='%s'" % [k, val]
     end
 
     xml = "<%s%s>%s</%s>" % [self.root.name, a.empty? ? '' : \
@@ -73,7 +82,7 @@ module XMLhelper
     body = pretty_print(children,2).join
 
     a = self.root.attributes.to_a.map do |k,v|
-      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v.to_s(unescape: false))]
+      "%s='%s'" % [k,(v.is_a?(Array) ? v.join(' ') : v.to_s)]
     end
 
     ind = "\n  "
