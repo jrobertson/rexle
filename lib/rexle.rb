@@ -13,6 +13,9 @@ require 'backtrack-xpath'
 
 # modifications:
 
+# 15-Jan-2022: bug fix: Related to previous bug fix; Detecting
+#                       Attributes::Value is now performed instead of
+#                       a String object
 # 14-Jan-2022: bug fix: Related to previous bug fix; Unescape is
 #                       now only applied to objects of type Attributes::Value
 # 01-Jan-2022: bug fix: Attribute values are no longer unescaped when
@@ -61,7 +64,7 @@ module XMLhelper
       val = if v.is_a?(Array) then
         v.join(' ')
       else
-        v.is_a?(String) ? v : v.to_s(unescape: false)
+        v.is_a?(Attributes::Value) ? v.to_s(unescape: false) : v
       end
 
       "%s='%s'" % [k, val]
